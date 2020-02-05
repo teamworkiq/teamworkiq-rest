@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   title: "TeamworkIQ API"
-  version: "3.0.0.RC4"
+  version: "3.0.0.RC5"
   "x-logo":
     "url": "https://teamworkiq.com/wp-content/uploads/2019/10/logo-teamworkiq.svg"
     "altText": "TeamworkIQ logo"
@@ -136,7 +136,7 @@ info:
     See [API Limits](https://help.teamworkiq.com/en/articles/3687339).
 
 servers:
-  - url: "https://api.teamworkiq.com"
+  - url: "https://api.teamworkiq.com/api"
     description: TeamworkIQ APIs
 paths:
   /v3/info/{acc}/access:
@@ -178,10 +178,6 @@ paths:
       responses:
         200:
           description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ArbitraryObject"
         400:
           description: |
             Bad Request: Invalid request parameters.
@@ -220,6 +216,19 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/access"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.acc: "method.request.path.acc"
+          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        connectionId: "${stageVariables.engineEndpoint}"
+        httpMethod: "GET"
+        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -315,31 +324,30 @@ paths:
                 $ref: "#/components/schemas/FormDefinition"
               example:
                 fields:
-                  - "business-name":
-                      type: "text"
-                      subtype: "text"
-                      name: "business-name"
-                      label: "Business Name"
-                      required: true
-                  - "meeting-date":
-                      type: "date-time"
-                      name: "meeting-date"
-                      label: "Meeting Date"
-                      required: true
-                      include_time: true
-                      display_in_viewer_tz: true
-                  - "region":
-                      type: "select"
-                      name: "region"
-                      label: "Region"
-                      required: false
-                      values:
-                        - label: West
-                          value: west
-                        - label: Central
-                          value: central
-                        - label: East
-                          value: east
+                  - type: "text"
+                    subtype: "text"
+                    name: "business-name"
+                    label: "Business Name"
+                    required: true
+                  
+                  - type: "date-time"
+                    name: "meeting-date"
+                    label: "Meeting Date"
+                    required: true
+                    include_time: true
+                    display_in_viewer_tz: true
+                  
+                  - type: "select"
+                    name: "region"
+                    label: "Region"
+                    required: false
+                    values:
+                      - label: West
+                        value: west
+                      - label: Central
+                        value: central
+                      - label: East
+                        value: east
         400:
           description: |
             Bad Request: Invalid request parameters.
@@ -398,6 +406,20 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/templates/{acc}/{tpl}/params"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.tpl: "method.request.path.tpl"
+          integration.request.path.acc: "method.request.path.acc"
+          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        connectionId: "${stageVariables.engineEndpoint}"
+        httpMethod: "GET"
+        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -557,6 +579,20 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/templates/{acc}/{tpl}/commands/launch"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.tpl: "method.request.path.tpl"
+          integration.request.path.acc: "method.request.path.acc"
+          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        connectionId: "${stageVariables.engineEndpoint}"
+        httpMethod: "POST"
+        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -668,6 +704,19 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/info"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.acc: "method.request.path.acc"
+          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        connectionId: "${stageVariables.engineEndpoint}"
+        httpMethod: "GET"
+        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -743,6 +792,19 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
+      x-amazon-apigateway-integration:
+        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/builtin-fields"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.acc: "method.request.path.acc"
+          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        connectionId: "${stageVariables.engineEndpoint}"
+        httpMethod: "GET"
+        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
