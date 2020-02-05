@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   title: "TeamworkIQ API"
-  version: "3.0.0.RC5"
+  version: "3.0.0"
   "x-logo":
     "url": "https://teamworkiq.com/wp-content/uploads/2019/10/logo-teamworkiq.svg"
     "altText": "TeamworkIQ logo"
