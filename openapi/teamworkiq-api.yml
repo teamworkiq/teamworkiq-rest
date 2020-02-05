@@ -1,0 +1,1524 @@
+openapi: "3.0.1"
+info:
+  title: "TeamworkIQ API"
+  version: "3.0.0.RC4"
+  "x-logo":
+    "url": "https://teamworkiq.com/wp-content/uploads/2019/10/logo-teamworkiq.svg"
+    "altText": "TeamworkIQ logo"
+    backgroundColor: "#FFFFFF00"
+    href: "https://teamworkiq.com"
+  description: |
+    Copyright &copy; 2016-2020 TeamworkIQ. All Rights Reserved. Use subject to [Terms of Service](https://teamworkiq.com).
+
+    # Introduction
+    
+    Welcome to the documentation for the TeamworkIQ REST API.
+    
+    This API allows you to automate TeamworkIQ functionality and
+    to integrate TeamworkIQ with external applications.
+    
+    ## Core concepts
+  
+    ### Accounts and Users
+  
+    Your organization has a TeamworkIQ **account**. TeamworkIQ **users**
+    represent users of the system. Each user corresponds to exactly one email
+    address. Users can create accounts and can be invited to join accounts.
+    Users who create or join accounts become **members** of those accounts.
+    
+    An **app** is an API client. An app always belongs to an account. The
+    app identifies itself to the TeamworkIQ API using an **API Key** (see
+    the Authentication section).
+  
+    ### Processes and Templates
+  
+    TeamworkIQ allows you to manage **processes**. A process is a series of
+    steps that are performed in order to achieve a desired end.
+    
+    Sometimes your organization will perform an *ad hoc* process, which is
+    executed exactly once.
+    
+    More often, your organization will design processes that can be repeated
+    many times. For example, an employee onboarding process is repeated for
+    each new employee. In TeamworkIQ, a repeating process is implemented as
+    a **process template**.
+    
+    A single running process in TeamworkIQ, whether repeating or *ad hoc*,
+    is called a **process** or **process instance**.
+    
+    A process template may be used to **launch** multiple process instances.
+    
+    Every process or template specifies a series of **tasks**. Each task is
+    assigned to an **assignee**.
+    
+    A running process is managed by one or more **process owners**. A process
+    owner assigns tasks to team members and handles any issues that appear
+    while the process is being executed.
+    
+    ### Forms and Fields
+    
+    A task may optionally have a **task form**, which allows an assignee of
+    the task to enter information while performing the task.
+    
+    A process template may specify a **launch form**, which is submitted by
+    a client that is permitted to launch a process based on the template.
+    
+    A form  consists of **fields**. These control data submission and storage
+    within the process.
+    
+    When you create a process or template, you define the launch forms and
+    task forms and you specify the fields that appear therein. Client software
+    will need to retrieve the form's metadata to determine what fields are
+    present in the form and what types of values should be submitted to them.
+    
+    A field is specified by its **field definition**. The definition
+    specifies metadata about the field, such as its name, type, help text,
+    default value and other information. The definition of a field is
+    created by the author of the template or process, usually using the
+    TeamworkIQ author tool. It can be retrieved and examined by client
+    software, telling the client all about the form field.
+    
+    When the process is executed, a client may submit form data just as
+    a human does. When submitting field data, the client only submits
+    the names and values of the fields. The other metadata is not submitted.
+    
+    ## Feedback
+  
+    Want to share your opinion about our API with us? Tell us how
+    you feel about our API and what we can do to make it better.
+
+    # Requests and Responses
+    
+    ## URI Paths
+    
+    Parameters that identify the target of a request appear only in the
+    URI path. The URI path is structured like:
+    
+      `/api/v3/{resource type}/{resource-specific path}`
+  
+    For example, **information** resource paths look like his:
+  
+     - `/api/v3/info/{acc}/access`
+     - `/api/v3/info/{acc}/info`
+     - ...
+    
+    **Template** resource paths look like this:
+    
+     - `/api/v3/templates/{acc}/{tpl_no}/params`
+     - `/api/v3/templates/{acc}/{tpl_no}/commands/{command}`
+     - ...
+  
+    ## Request Body
+    
+    If a request body is required, its content type is ALWAYS JSON unless
+    otherwise specified. No other format (e.g. HTML or XML) is ever accepted.
+    
+    # Testing and troubleshooting requests
+    
+    When in doubt, use cURL, PostMan or another transparent third-party HTTP
+    client to test your API request. If you need to ask Support for help,
+    please be sure that you can explain your API questions or issues using cURL.
+    
+    When you interact with your TeamworkIQ account, remember that you are interacting
+    with your organization's live data and your live systems. If you need to test
+    integrations, consider using a separate Staging account for testing, so that there
+    is absolutely no possibility that your live systems or processes will be affected.
+   
+    ## Reporting issues to Support
+
+    If you need to contact support about an issue, prepare by gathering information
+    as described in [How to Report API Issues](https://help.teamworkiq.com/en/articles/3687885).
+    Providing the requested information and replicating the issue with cURL or PostMan
+    first can significantly reduce the turnaround time for a support request.
+ 
+    # API Limits
+    
+    See [API Limits](https://help.teamworkiq.com/en/articles/3687339).
+
+servers:
+  - url: "https://api.teamworkiq.com"
+    description: TeamworkIQ APIs
+paths:
+  /v3/info/{acc}/access:
+    get:
+      summary: Verify account access
+      tags:
+        - Basic Operations
+      description: |
+        This request is used to check whether the client's API Key successfully authenticates
+        the client to the TeamworkIQ API and whether the API key permits access to the account.
+
+        This operation does not depend on any account resources such as templates or processes.
+        It has no side effects. It is a good choice if you are doing development and want
+        to verify that your client is able to access the API.
+        
+        The API returns status 200 if all of the following are true:
+        
+         - The account is active.
+         - The account is permitted to use API features.
+         - The API Key is valid.
+         - The API Key provides access to the account.
+        
+        The API returns 401 if any of the following is true:
+        
+         - The account is not active.
+         - The account does not allow API access.
+         - The API Key is invalid.
+         - The API Key does not provide access to the account.
+        
+        Several other statuses are possible.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Account number
+          example: 12345
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArbitraryObject"
+        400:
+          description: |
+            Bad Request: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        429:
+          description: |
+            Too Many Requests: Request throttled or Quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/info/{acc}/access"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+
+                req.end();
+            };
+
+            requestHttp(`/api/v3/info/{acc}/access`);
+            
+      x-ignore-this: ignore this
+  /v3/templates/{acc}/{tpl}/params:
+    get:
+      summary: Get Template Launch Parameters
+      tags:
+        - Template Operations
+      description: |
+        Get the launch parameters for this template.
+        
+        For the published revision of this template, get the Launch Form definition.
+        The Launch Form definition specifies the fields whose values may be submitted
+        when launching a new process from this template. These fields are known as
+        Launch Parameters.
+  
+        Launch Parameters can only be fetched for the published revision of the template.
+        An unpublished template does not allow the client to fetch Launch Parameters.
+        
+        ### 200 (Success) case
+        
+        When this operation returns Success (200), the returned FieldsResponse object
+        has a `fields` property. This fields property specifies the Launch Form
+        fields that the client may specify when using this template to launch a new
+        process.
+  
+        The sample field data displayed in the 200 case is what you would see if the
+        template's Launch Form specifies a text field named `business-name`,
+        a date-time field named `meeting-date` and a select field named
+        `region`. When you use your own process template, your custom forms will
+        contain arbitrary sets of fields, and these will have whatever names
+        you have specified in your template.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Account number
+          example: 12345
+        - name: "tpl"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Template number
+          example: 54321
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormDefinition"
+              example:
+                fields:
+                  - "business-name":
+                      type: "text"
+                      subtype: "text"
+                      name: "business-name"
+                      label: "Business Name"
+                      required: true
+                  - "meeting-date":
+                      type: "date-time"
+                      name: "meeting-date"
+                      label: "Meeting Date"
+                      required: true
+                      include_time: true
+                      display_in_viewer_tz: true
+                  - "region":
+                      type: "select"
+                      name: "region"
+                      label: "Region"
+                      required: false
+                      values:
+                        - label: West
+                          value: west
+                        - label: Central
+                          value: central
+                        - label: East
+                          value: east
+        400:
+          description: |
+            Bad Request: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: |
+            Forbidden: No access permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: |
+            Not Found: The requested resource could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: |
+            Too Many Requests: Request throttled or Quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/templates/{acc}/{tpl}/params"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+            
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+
+                req.end();
+            };
+
+            requestHttp(`/api/v3/templates/{acc}/{tpl}/params`);
+            
+      x-ignore-this: ignore this
+  /v3/templates/{acc}/{tpl}/commands/launch:
+    post:
+      summary: Launch Process from Template
+      tags:
+        - Template Operations
+      description: |
+        Launch a new process based on the published revision of this template.
+  
+        For the published revision of this template, get the Launch Form definition.
+        If the template has a Launch Form, then the launch request must include a
+        `launch_params` property that contains values for the template's Launch
+        Parameters. The Launch Parameters are the fields of the template's Launch
+        Form.
+        
+        A process can only be launched from the published revision of the template.
+        An unpublished template does not allow the client to launch processes.
+  
+        The field data in the sample request body assumes that the Launch Form
+        specifies a text field named `business-name`, a date-time field named
+        `meeting-date` and a select field named `region`. When you use your
+        own process template, your custom forms will contain arbitrary sets of fields,
+        and these will have whatever names you have specified in your template.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Account number
+          example: 12345
+        - name: "tpl"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Template number
+          example: 54321
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LaunchCommand"
+            example:
+              launch_params:
+                "business-name": "Acme Inc."
+                "meeting-date": "1600496307258"
+                "region":
+                  - west
+        required: true
+      responses:
+        201:
+          description: Success
+          headers:
+            Location:
+              schema:
+                type: "string"
+                format: "uri"
+              description: "Contains the URI for the newly launched process"
+          content: {}
+        400:
+          description: |
+            Bad Request: Invalid request parameters or request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: |
+            Forbidden: No access permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: |
+            Not Found: The requested resource could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: |
+            Too Many Requests: Request throttled or Quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+              -X POST -i \
+              -H "Content-Type: application/json" \
+              -d '{"launch_params":{"business-name":"Acme Inc.","meeting-date":"1580610161378"}}' \
+              "https://api.teamworkiq.com/api/v3/templates/{acc}/{tpl}/commands/launch"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..."; // See "Securing your API Keys"
+
+            const requestHttp = (path, data) => {
+                const body = JSON.stringify(data);
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+
+                req.write(body);
+                req.end();
+            };
+
+            requestHttp(`/api/v3/templates/{acc}/{tpl}/commands/launch`, {
+              launch_params: {
+                "business-name":"Acme Inc.",
+                "meeting-date":"1580610161378"
+              }
+            });
+            
+      x-ignore-this: ignore this
+  /v3/info/{acc}/info:
+    get:
+      summary: Get account quotas and metadata
+      tags:
+        - Info Operations
+      description: |
+        Returns account information.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          description: Account number
+          schema:
+            type: "integer"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountLimits"
+        400:
+          description: |
+            Bad Request: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        429:
+          description: |
+            Too Many Requests: Request throttled or Quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/info/{acc}/info"
+      x-ignore-this: ignore this
+  /v3/info/{acc}/builtin-fields:
+    get:
+      summary: Get available built-in fields
+      tags:
+        - Info Operations
+      description: |
+        Returns a list of built-in, read-only fields that may be referenced from template
+        and process models without being defined by the process or template author.
+  
+        In most cases, you will only use the fields listed in the table below:
+        
+        | Field Name | Description |
+        |---|---|
+        | process-link         | Browser link to process screen in TeamworkIQ |
+        | process-started      | Exact time when process started |
+        | process-started-hour | process-started rounded down to previous hour |
+        
+        Fields whose names begin with "checklist-" are deprecated.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          description: Account number
+          schema:
+            type: "integer"
+          example: 12345
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuiltinFieldsResponse"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        429:
+          description: Throttled or Quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/info/{acc}/builtin-fields"
+      x-ignore-this: ignore this
+components:
+  schemas:
+    LaunchCommand:
+      description: |
+        When the client launches a process from a template, the body of the
+        launch request must be a LaunchCommand JSON object.
+      required:
+        - "launch_params"
+      type: "object"
+      properties:
+        launch_params:
+          $ref: "#/components/schemas/FieldValues"
+    FormDefinition:
+      description: |
+        A FormDefinition specifies the fields that comprise a Task Form or a Launch Form.
+      type: "object"
+      required:
+        - "fields"
+      properties:
+        fields:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AbstractField"
+    BuiltinFieldsResponse:
+      description: |
+        A BuiltinFieldsResponse provides definitions for all of the built-in fields.
+        These fields are automatically pre-defined by TeamworkIQ and are available for
+        use in all templates.
+      type: "object"
+      additionalProperties:
+        $ref: "#/components/schemas/AbstractField"
+    AbstractField:
+      oneOf:
+        - $ref: "#/components/schemas/AutoCompleteField"
+        - $ref: "#/components/schemas/CheckboxGroupField"
+        - $ref: "#/components/schemas/DateTimePickerField"
+        - $ref: "#/components/schemas/FileField"
+        - $ref: "#/components/schemas/HeaderField"
+        - $ref: "#/components/schemas/HiddenField"
+        - $ref: "#/components/schemas/NumberInputField"
+        - $ref: "#/components/schemas/ParagraphField"
+        - $ref: "#/components/schemas/RadioGroupField"
+        - $ref: "#/components/schemas/SelectField"
+        - $ref: "#/components/schemas/TextareaField"
+        - $ref: "#/components/schemas/TextInputField"
+    HeaderField:
+      description: |
+        A Header field defines a form field of type Header.
+        Header fields add explanatory headers to a form. They do not allow the client to
+        submit data to TeamworkIQ.
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          enum:
+            - "header"
+        subtype:
+          description: |
+            Header subtypes specify 4 header sizes. h1 is the largest, h4 the smallest.
+          type: "string"
+          enum:
+            - "h1"
+            - "h2"
+            - "h3"
+            - "h4"
+        label:
+          description: |
+            The label specifies the header's content
+          type: "string"
+    ParagraphField:
+      description: |
+        A Paragraph field defines a form field of type Paragraph.
+        Paragraph fields add explanatory text to a form. They do not allow the client to
+        submit data to TeamworkIQ.
+      type: "object"
+      required:
+        - type
+        - subtype
+        - label
+      properties:
+        type:
+          type: "string"
+          enum:
+            - "paragraph"
+        subtype:
+          description: |
+            Paragraph subtypes specify paragraph format. Currently, there is only one supported subtype.
+          type: "string"
+          enum:
+            - "paragraph"
+        label:
+          description: |
+            The label specifies the content of the paragraph.
+          type: "string"
+    AbstractDataField:
+      description: |
+        An AbstractDataField represents any kind of field that allows the client
+        to submit data to TeamworkIQ. A TextInputField or FileField is a data field;
+        a ParagraphField or a HeaderField is not.
+      type: "object"
+      required:
+        - type
+        - name
+        - label
+      properties:
+        type:
+          description: |
+            This property specifies the field type.
+          type: "string"
+        name:
+          description: |
+            This property specifies the field name for the form field. The field name is thee
+            name that client programs use to uniquely identify the field within an instance
+            of a process.
+            
+            When you launch a process, the request body will contain a `launch_params**
+            object whose property names are the names of form fields and whose property
+            values are the values of these fields.
+          type: "string"
+        description:
+          description: |
+            Specifies the optional **Help Text** for the form field. Intended for human users.
+          type: "string"
+        required:
+          description: |
+            If true, the field is required and MUST be non-null when the
+            form is submitted. If false, the field is optional. Corresponds to
+            the Required checkbox for the form field within the Author Tool.
+          type: "boolean"
+        label:
+          description: |
+            Specifies the field label that should be displayed above the field when
+            the form is rendered. Intended for human users.
+          type: "string"
+        placeholder:
+          description: |
+            Specifies the placehoolder that should be displayed if the field does not
+            have any value. Intended for human users.
+          type: "string"
+    TextInputField:
+      description: |
+        An ordinary text input field.
+        
+        For longer text blocks or those that require newlines, use
+        a Textarea field instead.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - subtype
+            - label
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "text"
+            subtype:
+              description: |
+                The subtype of text field. For example, this text field might be
+                intended to hold an email address.
+              type: "string"
+              enum:
+                - "text"
+                - "email"
+                - "link"
+            maxlength:
+              description: |
+                The maximum permitted length of the field, in characters. Submitting aa longer
+                value will cause the request to fail.
+              type: "integer"
+              format: "int32"
+            value:
+              description: |
+                Default value. If present, it must be a string.
+              type: "string"
+    TextareaField:
+      description: |
+        A multi-line 'textarea' input field.
+    
+        If the assignee only needs to enter a few words, use the TextInputField
+        instead.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+            - subtype
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "textarea"
+            subtype:
+              description: |
+                The subtype of text field. Right now there is only textarea.
+              type: "string"
+              enum:
+                - "textarea"
+            maxlength:
+              description: |
+                The maximum permitted length of the field, in characters. Submitting aa longer
+                value will cause the request to fail.
+              type: "integer"
+              format: "int32"
+            rows:
+              description: |
+                The number of rows to display in the forrm. This is a hint for the UI.
+              type: "integer"
+              format: "int32"
+            value:
+              description: |
+                The default value for this field, which should be used if no other
+                value has been selected. The default value must be a string, if it
+                is specified at all.
+              type: "string"
+    SelectField:
+      description: |
+        This type of "value picker" field allows the assignee of the task to use a
+        pulldown menu to pick values.
+        
+        The `values` property of this field specifies a list of label-value
+        pairs. These are the items in the pulldown menu.
+    
+        The value of a Select field is ALWAYS an array of strings.
+
+        Therefore, the `value` property (which specifies the default value of
+        the field) is also an array of strings.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - values
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "select"
+            values:
+              description: |
+                An array of (`label`, `value`) pairs that is used to render a pulldown
+                menu for the user of the form. The options are displayed in the order
+                specified by the array. The `label` is displayed in the pulldown. Selecting
+                an option in the pulldown adds the selected option's `value` to the array
+                of values that the field will submit to TeamworkIQ.
+                
+                With a Select, only the values specified in the `values` list may be
+                selected. There is no `other` property. This type of field does, however,
+                optionally support the selection of multiple values, if the `multiple`
+                property is true.
+  
+                #### Important!
+                The `values` property is completely different from the `value` property.
+                The `values` property specifies the list of selectable items. The `value`
+                property specifies the option/s that are selected by default.
+              type: "array"
+              items:
+                $ref: "#/components/schemas/LabeledValue"
+            multiple:
+              description: |
+                Specifies whether the client is allowed to choose more than one values
+                from the `values` pulldown.
+                
+                If `multiple` is true, then a client may submit an array that
+                contains multiple values.
+                If `multiple` is false, then when a client submits an array, it
+                must contain AT MOST ONE value.
+  
+                Default is **false**.
+              type: "boolean"
+            value:
+              description: |
+                The default value for this field, which should be used if no other
+                value has been selected. The default value must be an array of strings,
+                if it is specified at all.
+              type: "array"
+              items:
+                type: "string"
+    CheckboxGroupField:
+      description: |
+        This type of "value picker" field allows the assignee of the task to use a
+        checkbox group to pick values.
+    
+        The `values` property of this field specifies a list of label-value
+        pairs. These are the items in the checkbox group.
+    
+        The value of a CheckboxGroup field is ALWAYS an array of strings.
+    
+        Therefore, the `value` property (which specifies the default value of
+        the field) is also an array of strings.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - values
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "checkbox-group"
+            values:
+              description: |
+                An array of (`label`, `value`) pairs that is used to render a checkbox
+                group for the user of the form. The options are displayed in the order
+                specified by the array. The `label` is displayed in the UI. Checking
+                the box next to an option adds the selected option's `value` to the array
+                of values that the field will submit to TeamworkIQ.
+  
+                A CheckboxGroup always permits the selection of multiple values. If the
+                `other` property is true, then the field also allows unlisted values to
+                be submitted. See `other` below.
+                
+                #### Important!
+                The `values` property is completely different from the `value` property.
+                The `values` property specifies the list of selectable items. The `value`
+                property specifies the option/s that are selected by default.
+              type: "array"
+              items:
+                $ref: "#/components/schemas/LabeledValue"
+            other:
+              description: |
+                Specifies whether the client is allowed to choose values that are
+                not specified in the `values` list. In the Author Tool, this
+                property corresponds to the "Let users enter an unlisted option" setting.
+    
+                If `other` is true, then a client may submit an array that
+                contains a value that is not specified in the `values` pulldown.
+                If `other` is false, then submitting such "other" values is forbidden.
+    
+                You might use `other` if your field specifies commonly seen values,
+                but must be flexible enough to handle unusual values as well. For example,
+                the pulldown might list the company's standard employee computer
+                configurations; but in rare cases, a specialized configuration may be needed.
+                
+                A CheckboxGroup field always allows multiple selections.
+    
+                Default is **false**.
+              type: "boolean"
+            value:
+              description: |
+                The default value for this field, which should be used if no other
+                value has been selected. The default value must be an array of strings,
+                if it is specified at all.
+              type: "array"
+              items:
+                type: "string"
+    RadioGroupField:
+      description: |
+        This type of "value picker" field allows the assignee of the task to use a
+        radio group to pick one value.
+    
+        The `values` property of this field specifies a list of label-value
+        pairs. These are the items in the radio group.
+    
+        The value of a RadioGroup field is ALWAYS an array of strings.
+    
+        Therefore, the `value` property (which specifies the default value of
+        the field) is also an array of strings.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+            - values
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "radio-group"
+            values:
+              description: |
+                An array of (`label`, `value`) pairs that is used to render a radio
+                group for the user of the form. The radio options are displayed in the order
+                specified by the array. The `label` is displayed in the UI. Checking
+                the box next to an option adds the selected option's `value` to the array
+                of values that the field will submit to TeamworkIQ.
+    
+                A CheckboxGroup only permits the selection of a single value. If the
+                `other` property is true, then the field also allows unlisted values to
+                be submitted. See `other` below.
+    
+                #### Important!
+                The `values` property is completely different from the `value` property.
+                The `values` property specifies the list of selectable items. The `value`
+                property specifies the option that is selected by default.
+              type: "array"
+              items:
+                $ref: "#/components/schemas/LabeledValue"
+            other:
+              description: |
+                Specifies whether the client is allowed to choose values that are
+                not specified in the `values` list. In the Author Tool, this
+                property corresponds to the "Let users enter an unlisted option" setting.
+    
+                If `other` is true, then a client may submit an array that
+                contains a value that is not specified in the `values` pulldown.
+                If `other` is false, then submitting such "other" values is forbidden.
+    
+                You might use `other` if your field specifies commonly seen values,
+                but must be flexible enough to handle unusual values as well. For example,
+                the pulldown might list the company's standard employee computer
+                configurations; but in rare cases, a specialized configuration may be needed.
+    
+                A RadioGroup field always allows multiple selections.
+    
+                Default is **false**.
+              type: "boolean"
+            value:
+              description: |
+                The default value for this field, which should be used if no other
+                value has been selected. The default value must be an array of strings,
+                if it is specified at all. The array size must NOT be greater than 1.
+              type: "array"
+              items:
+                type: "string"
+    AutoCompleteField:
+      description: |
+        This type of "value picker" field allows the assignee of the task to use an
+        "autocomplete" text input to pick one value.
+    
+        The `values` property of this field specifies a list of label-value
+        pairs. These are the items that are available for auto-completion.
+    
+        The value of an AutoComplete field is ALWAYS an array of strings.
+    
+        Therefore, the `value` property (which specifies the default value of
+        the field) is also an array of strings.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+            - values
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "autocomplete"
+            values:
+              description: |
+                An array of (`label`, `value`) pairs that is used to render an autocomplete
+                widget for the user of the form. The autocomplete options are displayed in the order
+                specified by the array. The `label` is displayed in the UI. Selecting
+                an option adds the selected option's `value` to the array
+                of values that the field will submit to TeamworkIQ.
+    
+                An Autocomplete field only permits the selection of a single value. If the
+                `other` property is true, then the field also allows unlisted values to
+                be submitted. See `other` below.
+    
+                #### Important!
+                The `values` property is completely different from the `value` property.
+                The `values` property specifies the list of selectable items. The `value`
+                property specifies the option that is selected by default.
+              type: "array"
+              items:
+                $ref: "#/components/schemas/LabeledValue"
+            other:
+              description: |
+                Specifies whether the client is allowed to enter values that are
+                not specified in the `values` list. In the Author Tool, if the field's
+                "Only accept a pre-defined Option" setting is checked, then `other`
+                is false. If the setting is unchecked, then `other` is true.
+                
+                If `other` is true, then a client may submit an array that
+                contains a value that is not specified in the `values` pulldown.
+                If `other` is false, then submitting such "other" values is forbidden.
+    
+                You might use `other` if your field specifies commonly seen values,
+                but must be flexible enough to handle unusual values as well. For example,
+                the pulldown might list the company's standard employee computer
+                configurations; but in rare cases, a specialized configuration may be needed.
+    
+                An Autocomplete field always allows only ONE selection. Multiple selections
+                are forbidden.
+    
+                Default is **true**.
+              type: "boolean"
+            value:
+              description: |
+                The default value for this field, which should be used if no other
+                value has been selected. The default value must be an array of strings,
+                if it is specified at all. The array size must NOT be greater than 1.
+              type: "array"
+              items:
+                type: "string"
+    DateTimePickerField:
+      description: |
+        This type of field allows the assignee of the task to select a date-time.
+
+        The value of a date-time field is a string containing the number of
+        milliseconds since January 1, 1970, UTC time. Time values submitted to
+        and returned by TeamworkIQ APIs are ALWAYS expressed as UTC dates.
+        
+        Therefore, the `value` property (which specifies the default value of
+        the field) is also a string that contains such a number.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "date-time"
+            include_time:
+              description: |
+                If true, then TeamworkIQ forms include time as well as date when rendering
+                or collecting values. If false, only date will be rendered or collected.
+                The latter is useful if you need to collect birth dates or other calendar
+                dates, without times.
+                This property is intended as a hint for interfaces that allow human
+                interaction with the system.
+              type: "boolean"
+            display_in_viewer_tz:
+              description: |
+                If true, then TeamworkIQ forms display the value of the field in the
+                viewer's timezone. If false, then the value is rendered
+                The latter is useful if the field needs to record a single consistent
+                time value that everybody sees, regardless of their timezone.
+                The value will be submitted and retrieved, as always, in UTC time,
+                and the form will render it without converting it to the user's timezone.
+                This property is intended as a hint for interfaces that allow human
+                interaction with the system.
+              type: "boolean"
+            value:
+              description: |
+                Default value. If specified, then the value must be the number of msec
+                since midnight on January 1, 1970, UTC, expressed as a string. For example,
+                "1580510091163" is a valid value.
+              type: "integer"
+              format: "int64"
+              example: "1580512652384"
+    NumberInputField:
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "number"
+            max:
+              description: |
+                Maximum permitted value for this field. If specified, must be a numerical
+                string. Default is no maximum.
+              type: "string"
+            min:
+              description: |
+                Minimum permitted value for this field. If specified, must be a numerical
+                string. Default is no minimum.
+              type: "string"
+            step:
+              description: |
+                If this property is specified, it specifies the "step" between permitted
+                values. Some examples:
+  
+                 - If `step` is "1", then only whole numbers (... -2, -1, 0, 1, 2, ...) can be submitted as values.
+                 - If `step` is "1000", then only 1000s (... -2000, -1000, 0, 1000, 2000, ...) can be submitted
+                   as values.
+                 - If `step` is "0.01", then only multiples of 0.01 (... -0.02, -0.01, 0.00, 0.01, 0.02, ...)
+                   can be submitted as values. This might be useful if you need to specify dollars and cents.
+                  
+                Must be a positive ( > 0 ) numerical string.
+                
+                Default is no step (i.e. no restriction).
+              type: "string"
+            value:
+              description: |
+                Default value. If present, it must be a string containing a number.
+              pattern: "[0-9]{0,10}.?[0-9]{0,10}"
+              type: "string"
+    HiddenField:
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+          properties:
+            type:
+              type: "string"
+              enum:
+                - "hidden"
+            value:
+              description: |
+                Default value. If present, it must be a string.
+              type: "string"
+    FileField:
+      description: |
+        Allows file upload and download.
+        
+        File fields are only supported when the process is already running. TeamworkIQ
+        does not support File fields in template launch forms, which are submitted
+        before the process starts.
+      allOf:
+        - $ref: "#/components/schemas/AbstractDataField"
+        - type: "object"
+          required:
+            - type
+            - name
+            - label
+          properties:
+            type:
+              description: |
+                This property specifies the field type.
+  
+                File fields are **not** supported in template launch forms.
+              type: "string"
+              enum:
+                - "file"
+            multiple:
+              description: |
+                Specifies whether the field will store multiple files at the same time.
+    
+                If `multiple` is true, then a client may upload more than one file.
+                If `multiple` is false, then a client must delete the field's
+                existing file before another can be uploadad.
+  
+                Default is **true**.
+              type: "boolean"
+    AccountLimits:
+      description: |
+        Limits (such as quotas and metadata) for an account.
+      type: "object"
+      required:
+        - root_domain
+        - file_types
+        - max_file_size
+        - max_files
+        - api_scope_namespace
+      properties:
+        max_file_size:
+          description: |
+            Maximum file size for file uploads.
+          type: "integer"
+        max_files:
+          description: |
+            Maximum number of files that a single File field can store
+          type: "integer"
+        file_types:
+          description: |
+            An array of file types that may be uploaded in File Upload fields
+          type: "array"
+          items:
+            $ref: "#/components/schemas/FileTypeInfo"
+        root_domain:
+          description: |
+            Reserved for future use.
+          type: "string"
+        api_scope_namespace:
+          description: |
+            Reserved for future use.
+          type: "string"
+      example:
+        max_file_size: 50000
+        max_files: 50
+        file_types:
+          - file_ext: ".pdf"
+            mime_type: "application/pdf"
+          - file_ext: ".png"
+            mime_type: "image/png"
+        root_domain: ".teamworkiq.com"
+        api_scope_namespace: "https://api.teamworkiq.com/v3/"
+    LabeledValue:
+      type: "object"
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: "string"
+        value:
+          oneOf:
+            - type: "integer"
+              format: "int32"
+            - type: "string"
+            - type: "object"
+            - type: "boolean"
+            - type: "array"
+    Error:
+      type: "object"
+      required:
+        - "code"
+        - "status"
+      properties:
+        status:
+          type: "integer"
+          format: "int32"
+          description: HTTP status code
+          example: 403
+        code:
+          type: "integer"
+          format: "int32"
+          description: |
+            Detailed error code. For more information about individual Error Codes, 
+            see [Troubleshooting](https://help.teamworkiq.com/en/collections/2138802).
+          example: 1403201
+    ErrorWithMsg:
+      type: "object"
+      required:
+        - "status"
+      properties:
+        status:
+          type: "integer"
+          format: "int32"
+          description: HTTP status code
+          example: 403
+        message:
+          type: "string"
+          description: Error message
+    ArbitraryObject:
+      type: "object"
+      additionalProperties: { }
+    FieldValues:
+      type: "object"
+      additionalProperties: { }
+    FileTypeInfo:
+      description: |
+        Information about a supported file type
+      type: "object"
+      required:
+        - "file_ext"
+        - "mime_type"
+        - label
+      properties:
+        file_ext:
+          description: |
+            File name extension, e.g. "png" or "pdf"
+          type: "string"
+        mime_type:
+          description: |
+            MIME type, e.g. "image/png" or "application/pdf"
+          type: "string"
+  securitySchemes:
+    api_key:
+      description: |
+        To use TeamworkIQ's RESTful API, you need a valid API Key.
+  
+        ### Getting an API Key
+  
+        See [How to Get a TeamworkIQ API Key](https://help.teamworkiq.com/en/articles/3625469-how-to-get-an-api-key).
+  
+        ### Securing your API Key
+  
+        See [Securing your API Key](https://help.teamworkiq.com/en/articles/3683294-securing-your-api-keys).
+        
+        ### Making Requests with your API Key
+  
+        Every HTTPS request that a client sends to the TeamworkIQ API must include
+        an `x-api-key` request header whose value is the API Key. You do NOT need
+        to base64-encode the key.
+      type: "apiKey"
+      name: "x-api-key"
+      in: "header"

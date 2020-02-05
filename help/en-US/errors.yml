@@ -1,0 +1,77 @@
+---
+1400000: 
+  summary: Bad Request
+  help: "/3687873"
+1400001: 
+  summary: Bad Parameters
+  help: "3688192S"
+1400002:
+  summary: Bad Process Model
+  help: "/3688202"
+1400103:
+  summary: Bad Title
+  help: "/3683535"
+1400112:
+  summary: Markup Forbidden
+  help: "/3683552"
+1400228:
+  summary: Subtasks Forbidden
+  help: "/3683702"
+1400229:
+  summary: Missing Required Subtasks
+  help: "/3683717"
+1400301:
+  summary: Invalid Field Models
+  help: "/3683719"
+1400302:
+  summary: Field Value Not Number
+  help: "/3683885"
+1400303:
+  summary: Field Value Out of Range
+  help: "/3683898"
+1400304:
+  summary: Field Value Step Violation
+  help: "/3683904"
+1400306: 
+  summary: Field Selections Invalid
+  help: "/3686035"
+1400307:
+  summary: Field Value too Long
+  help: "/3686051"
+1400311:
+  summary: Field Value is Not a Date
+  help: "/3686059"
+1400392:
+  summary: Missing Required Field Value
+  help: "/3686065"
+1400393:
+  summary: Read-Only Violation
+  help: "/3686091"
+1400396:
+  summary: Markup Forbidden in Field Value
+  help: "/3686095"
+1400906:
+  summary: Invalid Launch Field Values
+  help: "/3686273"
+1401000:
+  summary: Missing Authentication Token
+  help: "/3687736"
+1403013:
+  summary: Forbidden in Status
+  help: "/3686295"
+1403311: 
+  summary: Forbidden Robot Launch
+  help: "/3686545"
+1403397: 
+  summary: Forbidden File Type
+  help: "3687840"
+3401001: 
+  summary: Not Authenticated
+  help: "/3687522"
+3429001: 
+  summary: Throttled
+  help: "/3686634"
+3429002: 
+  summary: Quota Exceeded
+  help: "/3686620"
+
