@@ -216,19 +216,6 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
-      x-amazon-apigateway-integration:
-        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/access"
-        responses:
-          default:
-            statusCode: "200"
-        requestParameters:
-          integration.request.path.acc: "method.request.path.acc"
-          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
-        passthroughBehavior: "when_no_match"
-        connectionType: "VPC_LINK"
-        connectionId: "${stageVariables.engineEndpoint}"
-        httpMethod: "GET"
-        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -406,20 +393,6 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
-      x-amazon-apigateway-integration:
-        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/templates/{acc}/{tpl}/params"
-        responses:
-          default:
-            statusCode: "200"
-        requestParameters:
-          integration.request.path.tpl: "method.request.path.tpl"
-          integration.request.path.acc: "method.request.path.acc"
-          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
-        passthroughBehavior: "when_no_match"
-        connectionType: "VPC_LINK"
-        connectionId: "${stageVariables.engineEndpoint}"
-        httpMethod: "GET"
-        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -579,20 +552,6 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
-      x-amazon-apigateway-integration:
-        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/templates/{acc}/{tpl}/commands/launch"
-        responses:
-          default:
-            statusCode: "200"
-        requestParameters:
-          integration.request.path.tpl: "method.request.path.tpl"
-          integration.request.path.acc: "method.request.path.acc"
-          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
-        passthroughBehavior: "when_no_match"
-        connectionType: "VPC_LINK"
-        connectionId: "${stageVariables.engineEndpoint}"
-        httpMethod: "POST"
-        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -704,19 +663,6 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
-      x-amazon-apigateway-integration:
-        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/info"
-        responses:
-          default:
-            statusCode: "200"
-        requestParameters:
-          integration.request.path.acc: "method.request.path.acc"
-          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
-        passthroughBehavior: "when_no_match"
-        connectionType: "VPC_LINK"
-        connectionId: "${stageVariables.engineEndpoint}"
-        httpMethod: "GET"
-        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
@@ -792,19 +738,6 @@ paths:
                 $ref: "#/components/schemas/ErrorWithMsg"
       security:
         - api_key: []
-      x-amazon-apigateway-integration:
-        uri: "http://${stageVariables.engineEndpointUrlSuffix}/api/v3/info/{acc}/builtin-fields"
-        responses:
-          default:
-            statusCode: "200"
-        requestParameters:
-          integration.request.path.acc: "method.request.path.acc"
-          integration.request.header.x-api-key-id: "context.identity.apiKeyId"
-        passthroughBehavior: "when_no_match"
-        connectionType: "VPC_LINK"
-        connectionId: "${stageVariables.engineEndpoint}"
-        httpMethod: "GET"
-        type: "http_proxy"
       x-code-samples:
         - lang: cURL
           source: |
