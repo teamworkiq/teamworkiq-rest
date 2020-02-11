@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   title: "TeamworkIQ API"
-  version: "3.0.0"
+  version: "3.1.0"
   "x-logo":
     "url": "https://teamworkiq.com/wp-content/uploads/2019/10/logo-teamworkiq.svg"
     "altText": "TeamworkIQ logo"
@@ -258,6 +258,156 @@ paths:
             requestHttp(`/api/v3/info/{acc}/access`);
             
       x-ignore-this: ignore this
+  /v3/templates/{acc}:
+    get:
+      summary: Get a list of published templates for the account
+      tags:
+        - Template Operations
+      description: |
+        Get a list of published templates.
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: rev
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - p
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "Employee+Onboarding:+01-%2A-2020"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TemplateRevSummary"
+              example:
+                - template_no: 12345
+                  title: My Template 1
+                  updated_at: '1581139222356'
+                  updated_by: 45678
+                - template_no: 12538
+                  title: My Template 2
+                  updated_at: '1581139245678'
+                  updated_by: 45422
+                - template_no: 12540
+                  title: Another Template
+                  updated_at: '1581139247000'
+                  updated_by: 45678
+        400:
+          description: |
+            Bad Request: Invalid request parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: |
+            Unauthorized: Invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: |
+            Forbidden: No access permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: |
+            Not Found: The requested resource could not be found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: |
+            Too Many Requests: Request throttled or Quota exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/templates/{acc}?rev=p&name=Foo+Bar+%2A;"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/templates/{acc}?rev=p&name=Foo+Bar+%2A;`);
+    
+      x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/params:
     get:
       summary: Get Template Launch Parameters
@@ -265,22 +415,22 @@ paths:
         - Template Operations
       description: |
         Get the launch parameters for this template.
-        
+      
         For the published revision of this template, get the Launch Form definition.
         The Launch Form definition specifies the fields whose values may be submitted
         when launching a new process from this template. These fields are known as
         Launch Parameters.
-  
+      
         Launch Parameters can only be fetched for the published revision of the template.
         An unpublished template does not allow the client to fetch Launch Parameters.
-        
+      
         ### 200 (Success) case
-        
+      
         When this operation returns Success (200), the returned FieldsResponse object
         has a `fields` property. This fields property specifies the Launch Form
         fields that the client may specify when using this template to launch a new
         process.
-  
+      
         The sample field data displayed in the 200 case is what you would see if the
         template's Launch Form specifies a text field named `business-name`,
         a date-time field named `meeting-date` and a select field named
@@ -316,14 +466,14 @@ paths:
                     name: "business-name"
                     label: "Business Name"
                     required: true
-                  
+                
                   - type: "date-time"
                     name: "meeting-date"
                     label: "Meeting Date"
                     required: true
                     include_time: true
                     display_in_viewer_tz: true
-                  
+                
                   - type: "select"
                     name: "region"
                     label: "Region"
@@ -402,7 +552,7 @@ paths:
           source: |
             let https = require('https');
             const api_key = "..." // See "Securing your API Keys"
-            
+        
             const requestHttp = (path) => {
                 const options = {
                     hostname: 'api.teamworkiq.com',
@@ -414,26 +564,26 @@ paths:
                         'x-api-key': api_key
                     },
                 };
-
+        
                 const req = https.request(options, (res) => {
                     console.log(`Status code: ${res.statusCode}\n`);
-
+        
                     res.on('data', (d) => {
                         console.log('Response:');
                         process.stdout.write(d);
                         console.log();
                     });
                 });
-
+        
                 req.on('erorr', (e) => {
                     console.error(e);
                 });
-
+        
                 req.end();
             };
-
+        
             requestHttp(`/api/v3/templates/{acc}/{tpl}/params`);
-            
+    
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/commands/launch:
     post:
@@ -746,6 +896,40 @@ paths:
       x-ignore-this: ignore this
 components:
   schemas:
+    TemplateRevSummary:
+      description: |
+        A summary of a published template revision
+      type: "object"
+      required:
+        - template_no
+        - title
+        - updated_at
+        - updated_by
+      properties:
+        template_no:
+          type: integer
+          format: int32
+          description: The template number for the template
+          example: 12345
+        title:
+          type: string
+          description: The title of the published revision of the template
+          example: My Sample Template
+        updated_at:
+          type: string
+          description: |
+            String containing the number of msec since midnight Jan 1, 1970 UTC
+          example: '1581001439775'
+        updated_by:
+          type: integer
+          format: int64
+          description: TeamworkIQ User ID
+          example: 45678
+      example:
+        template_no: 12345
+        title: My Onboarding Template
+        updated_at: '1581001439775'
+        updated_by: 45678
     LaunchCommand:
       description: |
         When the client launches a process from a template, the body of the

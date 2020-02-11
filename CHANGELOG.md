@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+## 3.1.0
+
+ * Add GET /api/v3/templates/{acc}
+
 ## 3.0.0
 
  * release
