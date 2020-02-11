@@ -297,15 +297,15 @@ paths:
                   $ref: "#/components/schemas/TemplateRevSummary"
               example:
                 - template_no: 12345
-                  title: My Template 1
+                  name: My Template 1
                   updated_at: '1581139222356'
                   updated_by: 45678
                 - template_no: 12538
-                  title: My Template 2
+                  name: My Template 2
                   updated_at: '1581139245678'
                   updated_by: 45422
                 - template_no: 12540
-                  title: Another Template
+                  name: Another Template
                   updated_at: '1581139247000'
                   updated_by: 45678
         400:
@@ -902,7 +902,7 @@ components:
       type: "object"
       required:
         - template_no
-        - title
+        - name
         - updated_at
         - updated_by
       properties:
@@ -911,9 +911,9 @@ components:
           format: int32
           description: The template number for the template
           example: 12345
-        title:
+        name:
           type: string
-          description: The title of the published revision of the template
+          description: The name (title) of the published revision of the template
           example: My Sample Template
         updated_at:
           type: string
@@ -927,7 +927,7 @@ components:
           example: 45678
       example:
         template_no: 12345
-        title: My Onboarding Template
+        name: My Onboarding Template
         updated_at: '1581001439775'
         updated_by: 45678
     LaunchCommand:
