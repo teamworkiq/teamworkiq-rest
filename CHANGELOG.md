@@ -1,5 +1,17 @@
 ## CHANGELOG
 
+## 3.2.0
+
+ * Adds Account API
+
+ * Adds Activity API
+
+ * Adds Process API
+
+ * Adds additional Template API endpoints
+
+ * Adds introductory material
+
 ## 3.1.0
 
  * Add GET /api/v3/templates/{acc}
