@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   title: "TeamworkIQ API"
-  version: "3.2.2"
+  version: 3.3.1
   "x-logo":
     "url": "https://teamworkiq.com/wp-content/uploads/2019/10/logo-teamworkiq.svg"
     "altText": "TeamworkIQ logo"
@@ -32,15 +32,15 @@ info:
 
     ## What makes TeamworkIQ simple
 
-    A **workflow** or **process** is the sequence of steps through which a
-    desired outcome is achieved.
+    A **process** is the sequence of steps through which a desired outcome
+    is achieved.
 
-    To simplify Workflow Automation, TeamworkIQ models processes as simple
-    collaborative checklists composed of **tasks**. Complicated or multi-
-    step tasks may be subdivided into smaller **sub-tasks**. Tasks that are
+    To simplify Workflow Automation, TeamworkIQ models each process as a
+    simple collaborative checklist composed of **tasks**. Complicated or multi-step 
+    tasks may be subdivided into smaller **sub-tasks**. Tasks that are
     composed of sub-tasks are referred to as **list** tasks. Tasks that have
-    no sub-tasks are **basic** tasks. **Numbered Lists** specify that tasks
-    should be completed in sequence. **Bullet lists** specify that tasks
+    no sub-tasks are called **basic tasks**. **Numbered Lists** specify lists of tasks
+    that should be completed in sequence. **Bullet lists** specify lists of tasks
     may be completed in any order, and may be completed in parallel.
 
     For example:
@@ -63,47 +63,77 @@ info:
     --------------------------------
 
     To automate a process, simply document the process steps as an outline.
-    Add process roles, assignments, instructions, forms, due dates, and other
+    Add process roles, assignments, instructions, forms, due dates and other
     process elements as needed.
 
     TeamworkIQ also supports reopening tasks,
     [repeating sequences](https://help.teamworkiq.com/en/articles/4158569),
     [decision points](https://help.teamworkiq.com/en/articles/4158666)
-    and other flow-of-control concepts.
-
-    TeamworkIQ attributes an app's actions to a fictitious "robot user"
-    that has the same name as the app.
+    and other control-flow concepts.
 
     # API Concepts
   
-    ## Accounts, Users and User Groups
+    ## Actors
+    
+    Several kinds of **actors** perform actions in TeamworkIQ:
+    
+      * A **user** is a person.
+      * A **robot** is an API client program.
+      * The **system** actor refers to TeamworkIQ itself.
   
-    A user, user group or API client is called an **actor**.
+    TeamworkIQ attributes a user's actions to that user. Actions taken
+    by a client program are attributed to the app's robot. Actions taken
+    by TeamworkIQ itself are attributed to the system actor.
+    
+    Every actor has a user number.
   
     ### Users
     
-    A **user** in TeamworkIQ is anyone who has a sign in credential.
-    Each email address corresponds to exactly one TeamworkIQ user.
-    A user may be a member of multiple TeamworkIQ accounts. For example,
-    a consultant might belong to 3 accounts: one for her own business
-    and the others belonging to several of her clients.
+    A TeamworkIQ **user** is a person who logs into TeamworkIQ. Every TeamworkIQ
+    user has an email address. Two active users cannot share an email address.
+    Each email address can only be associated with one TeamworkIQ user at a time.
 
-    ### Accounts
+    A single user may, however, be a member of multiple TeamworkIQ accounts.
+    For example, a consultant might belong to three different accounts: one for
+    her own business and two others that belong to her clients.
+    
+    ### Robots
+    
+    A **robot** is an actor that represents an **app** (an API client program).
+    Every app has a robot actor whose name is the name of the app. The robot
+    actor is created automatically when the app is created.
+    
+    ### System
+    
+    Actor number zero (0) is the system actor. When TeamworkIQ performs an
+    action, the action is attributed to the system actor. For example, the
+    system actor causes a task to become actionable when all of its prerequisite
+    tasks are completed. The system actor causes a task to become late when the
+    task's due date passes.
+    
+    ## Accounts
 
     A user can create **accounts**. A user can also be invited to join other
     accounts. A user who creates or joins an account becomes a **member** of
     that account.
-
+    
+    Each user may play various **roles** within an account. These include
+    account member, account admin, account owner and account invitee.
     For information on other account roles, see
     [TeamworkIQ API: Users and Account Roles](https://help.teamworkiq.com/en/articles/4152206).
-
+  
+    When a client retrieves an account's users, TeamworkIQ returns both users
+    and robots. It is easy to distinguish robots from users; every robot has the
+    "robot" role, whereas a user never has the "robot" role.
+  
     ### User Groups
   
-    An account also contains **user groups**:
+    An account contains certain **user groups**:
     
       * `_members`: the group of all the account's members
       * `_admins`: the group of all the account's admins
-      * `_template_creators`: the group of all the account's template creators
+      * `_template_creators`: the group of all the account's template creators,
+        who have permission to create process templates.
     
     ## Apps and API Keys
   
@@ -111,61 +141,68 @@ info:
     app identifies itself to the TeamworkIQ API using an **API Key**. See
     [Authentication](#section/Authentication).
   
-    ## Processes and Process Templates
+    ## Process Model, Workflow and Process Template
     
-    In TeamworkIQ, a **process** is a single instance of a workflow.
-    The execution of every process is controlled by a process model.
-    
-    A **process model** defines a workflow, specifying the tasks to be
-    performed, the roles that actors play within the workflow
-    and other workflow properties.
+    A **process model** defines a process. It specifies the tasks to be
+    performed, the relationships between tasks, the roles that actors
+    play, and other process details.
+  
+    In TeamworkIQ, a **process workflow** is a single instance of a process.
+    The process model controls the execution of the workflow.
   
     A **process template** defines a process model for a repeatable
-    or recurring workflow. Users or API programs can launch processes
-    based on the template. For example, if a process template specifies
-    a Customer Onboarding workflow, then this template may be used
-    to launch Customer Onboarding processes for specific customers.
+    or recurring process. Actors can launch many process workflows
+    based on a single process template. For example, if a process template
+    specifies a Customer Onboarding process, then this template may be used
+    to launch Customer Onboarding workflows for specific customers.
   
-    ### Template Revisions (draft and published)
-  
-    A process template is versioned. A template owner edits the **draft**
-    revision. When the new revision is ready for use, the owner may
-    publish it. The published revision can then be used as follows:
+    ### Process Template versions
+    
+    A TeamworkIQ process template is versioned so that a process may evolve
+    over time. The version that is currently "in use" in the organization
+    is called the **published** version. 
+
+    The published version can be used as follows:
      
-     * Users who have **view** privileges for the template can see the
-       published revision.
-     * Actors who have **launch** privileges for the template can
-       launch processes based on the published revision.
+     * Actors with **view** privileges for the process template can
+       see the published version.
+     * Actors with **launch** privileges for the process template can
+       launch workflows based on the published version.
+
+    If template owners need to update the process, they may generate and 
+    edit a separate **draft** version. When the updates are complete, an
+    owner may publish the draft so that the new version of the process
+    "goes live."
     
-    A new draft revision can then be created, if necessary, so that the
-    owner can make changes without interfering with others' use of the
-    published revision.
-    
-    ### Single-use processes
+    The template's owners may update the draft version. The draft is
+    invisible to all other users, and cannot be used to launch workflows.
   
-    Although most processes are launched from templates, an actor
-    may also create and start a single-use process without using a
-    template.
+    ### Single-use workflows
+  
+    Although most workflows are launched from process templates, an
+    actor may also create and start a **single-use workflow**
+    without using a template. Such a workflow will initially exist
+    as a **draft workflow**, and will not become a running, actionable
+    workflow until it is **started** by one of its owners.
     
     ### The contents of a process model
     
     A process model specifies:
     
-     * The tasks that comprise the workflow, including task structure, assignments, due dates and more.
-     * The process roles played by actors who participate in the workflow, and assigns these roles to users
+     * The tasks that comprise the process, including task structure, assignments, due dates and more.
+     * The process roles played by actors who participate in the process, and assigns these roles to users
      * The fields that are used to collect data during task completion
-     * Other metadata about the process, such as name and tags.
     
     ## Process roles
 
     A **process role** defines the role that certain participants play in the
-    workflow. Each process model may define custom roles, such as "Customer",
+    process. A process model may define its own custom roles, such as "Customer",
     "VP", "Approver" and – if a process requires a specific person, rather
-    than a job function – a role like "Janice Radaic".
+    than a job function – "user" roles like "Janice Radaic".
     
-    The most common use of process roles is that they are assigned responsibilities
-    within the process. Specifically, when a process model assigns a set of tasks
-    to a role, the assignees of the role are responsible for completing these tasks.
+    A process role can be assigned responsibilities within the process.
+    When a process model assigns a set of tasks to a role, the assignees of the
+    role are responsible for completing these tasks.
 
     ### Role Types
     
@@ -180,34 +217,35 @@ info:
     (e.g. "Scholarship Applicant") or it might require someone  with a
     particular department, specialization or title. A Job Role may be
     assigned to more than one user, so a role like "Accounts Payable" might
-    be assigned to the 3 members of that department. A Job Role can be
-    left unassigned at first, and assigned by a process owner later on.
+    be assigned to the 3 members of the Accounts Payable department.
+    A Job Role may be left unassigned at first, and assigned by an
+    owner of the workflow long after the workflow starts.
     
     A **User Role** is used when the process is designed to require
     the participation of one specific person, rather than the
     participation of whichever users have the required position or
     relationship to the process.
     
-    ### Process Owners
+    ### Owners
     
-    Every process also has a special **Process Owner** role. The owners of a
-    process manage that process. They are responsible for monitoring
-    the process and resolving any issues that arise. Accordingly, they can view,
-    pause, edit, update, resume, or stop that process. They can edit any aspect
-    of the process, including tasks, assignments, and due dates. They can
+    Every workflow also has a special **Owner** role. The owners of a
+    workflow manage that workflow. They are responsible for monitoring
+    the workflow and resolving any issues that arise. Accordingly, they can view,
+    pause, edit, update, resume, or stop that workflow. They can edit any aspect
+    of the workflow, including tasks, assignments, and due dates. They can
     reopen or complete tasks for others if necessary.
     
     ### Role numbers and references
   
     Every role has a **role number**, which uniquely identifies the role
-    within the process model. The built-in "Process Owner" role has role
+    within the process model. The built-in workflow "Owner" role has role
     number 1001. The role number of every other role must be greater
     than 2000 and less than 3001.
   
     In a process model, all custom process roles MUST be defined in the
-    `process_roles` section of the model. The Process Owner role
-    is built into TeamworkIQ, so the process model does not define it
-    and it will not appear in the `process_roles` section.
+    `process_roles` section of the model. The workflow Owner role is
+    built into TeamworkIQ, so the process model does not define it
+    and it does not appear in the `process_roles` section.
   
     A general overview of Process Roles may be found
     [here](https://help.teamworkiq.com/en/articles/4153079).
@@ -217,18 +255,18 @@ info:
   
     ## Tasks
     
-    A process model specifies the **tasks** that comprise a workflow.
-    Tasks form a natural hierarchy; complicated tasks may be modeled as list
-    tasks, which are divided into sub-tasks. A list task controls the
-    sequence in which its sub-tasks may be performed.
-    
-    The fact that a list task controls the execution of its subtasks
-    is a key feature of TeamworkIQ. Every task is performed within the
-    context of its parent, and it is the context that determines what
-    happens when the task is completed, reopened or skipped, or when
-    something goes wrong.
+    A process model specifies the **tasks** that comprise a process.
+    Tasks form a natural hierarchy; complicated tasks may be modeled as
+    **list tasks**, which are divided into **sub-tasks**.
+  
+    This is a key feature of TeamworkIQ. Every task is performed
+    within the context of its **parent** list. The list controls
+    what happens after each of its subtasks task is completed, reopened
+    or skipped, or when something goes wrong. Thus, in a TeamworkIQ
+    workflow, the subtasks control the *work* and the list tasks
+    control the *flow*.
 
-    The common alternative – forcing every task to know all
+    The typical alternative – forcing every task to know all
     about what happens next and to control the transitions to all next
     steps – would lead to complex, monolithic processes that would be
     very difficult to manage.
@@ -238,33 +276,34 @@ info:
     Every task has a type:
     
      * `twiq.basic.task`: A Basic Task is a single-part actionable task.
-       It is a "leaf node" within the tree. It must NEVER contain sub-tasks.
+       It is a "leaf node" within the task hierarchy. It MUST NOT contain sub-tasks.
      * `twiq.numbered.list`: A Numbered List Task specifies that its
-       subtasks are performed sequentially, in the specified order.
-       Every Numbered List MUST contain sub-tasks. An empty list is forbidden.
+       subtasks are performed sequentially, in the listed order.
+       A Numbered List MUST contain sub-tasks. An empty list is forbidden.
      * `twiq.bullet.list`: A Bullet List Task specifies that its
-       subtasks can be performed in any order, or even in parallel.
-       Every Bullet List MUST contain sub-tasks. An empty list is forbidden.
+       subtasks may be performed in any order, or even in parallel.
+       A Bullet List MUST contain sub-tasks. An empty list is forbidden.
   
     ### The root task
   
-    The root of a process model's task tree is a special **root task**
+    The root of a process model's task hierarchy is a special **root task**
     that is hidden from process participants. The root task is always
-    a list task: either a Numbered List or a Bullet List.
+    a list task, but it may be either a Numbered List or a Bullet List.
     
     ### Task number
     
     Every task has a **task number**, which uniquely identifies the task
     within the process model. The number of the root task MUST
-    be 5001. The number of every other task must be greater
-    than 5001 and less than 8001.
+    be 5001. The number of every other task must be between 5001 and 8001.
   
     ### The tasks array and the task hierarchy
   
     The process model contains an ordered `tasks` array. The order
     of the array shows how the tasks are arranged vertically when
     viewed as a checklist. The task hierarchy within the checklist
-    is specified by the `parent_no` properties of the tasks.
+    is specified by the `parent_no` properties of the tasks. All
+    non-root tasks have a `parent_no` property. The root task has
+    none.
     
     Thus, to specify the following task hierarchy...
   
@@ -282,7 +321,7 @@ info:
   
     --------------------------------
   
-    ... a process model would include the following `tasks` array:
+    ... the process model would include the following `tasks` array:
   
     ```
     [
@@ -307,8 +346,8 @@ info:
     assigned. The assignees of this role are responsible for completing the
     task; we call them the "assignees of the task".
   
-    The root task (task 5001) is always assigned to the Process Owner role
-    (role 1001).
+    The root task (task 5001) is always assigned to the workflow's Owner
+    role (role 1001).
   
     If a task does not specify a `role_no` value, then it automatically
     inherits the role of its parent task. Thus, any subtasks in a list
@@ -317,7 +356,7 @@ info:
     
     Consider the following example.
   
-    | Task | Task hierarchy    | role_no | role_no_actual | Inherit role_no_actual from... |
+    | Task | Task hierarchy    | role_no | Inherited role | Inherits role from... |
     |------|-------------------|---------|----------------|----------------|
     | 5001 | Root Task | 1001 | 1001 | |
     | 5002 | &nbsp;&nbsp; 1. Milestone 1 | 2001 | 2001 | |
@@ -331,17 +370,16 @@ info:
     | 5004 | &nbsp;&nbsp; 3. Milestone 3 | | 1001 | 5001 |
 
     In the example, task 5021 is to be completed by the assignees of
-    role 2002. Task 5021 inherits the "actual role number" from its
-    parent (task 5011). Task 5011 inherits the "actual role number"
-    from its parent (task 5003).
+    role 2002. Task 5021 inherits the role of its parent (task 5011).
+    Task 5011 inherits the role of its parent (task 5003).
     
-    In the example, task 5004 is to be completed by the process owners.
+    In the example, task 5004 is to be completed by the workflow's Owners.
     It inherits role 1001 from its parent (task 5001, the root task).
     
-    The default situation, if no custom process roles are defined as part of
-    the process model, is that the root task is assigned to Process Owner,
-    and all other tasks inherit that role from their parents. Therefore,
-    all tasks are assigned to the process owners.
+    If the process model does not define any custom roles, then because
+    the root task is assigned to the workflow's owners, all other tasks
+    inherit that assignment from the root. Therefore, all tasks are
+    assigned to the workflow's owners.
   
     ## Task Forms, Launch Form and Form Fields
   
@@ -361,19 +399,19 @@ info:
   
     ### Form Fields
   
-    Each form consists of one or more **fields**. Fields control data submission
-    and storage of data within a process.
+    Each form consists of one or more **fields**. Fields control the submission
+    and storage of data within a task.
 
-    The process model must contain a **field definition** for each field.
-    This definition specifies the field name, type, help text, default
-    value and other information.
+    The process model must contain a **field definition** for each form
+    field that is used within the process. This definition specifies the
+    field name, type, help text, default value and other information.
     
-    The data for a task form is represented as a JSON object whose
-    property names are the names of the fields and whose property
-    values are the values of the fields. For example, if we have a text
-    field named "hello", a textarea named "blurb", a date-time field
-    named "birthday" and a checkbox field named "some-countries", the
-    following might be submitted as a data value:
+    Field data is represented as a JSON object whose property names are
+    the names of the fields and whose property values are the values of
+    the fields. For example, if a form contains a text field named "hello",
+    a textarea named "blurb", a date-time field named "birthday" and a
+    checkbox field named "some-countries", the following JSON object
+    might be submitted to the form:
     
     
     ```
@@ -387,11 +425,11 @@ info:
     
     ### Built-in Fields
     
-    TeamworkIQ also provides a number of **built-in fields**, which provide
-    certain information about the process iself. The values of these fields
-    are set when the process is started.
+    TeamworkIQ also includes a number of **built-in fields**, which provide
+    information about the workflow itself. The values of these fields
+    are set when the workflow is started.
     
-    Field definitions for the built-in fields are available in the
+    Field definitions for the built-in fields are available through the
     [Info section of the API](/api/docs/#tag/Info-API).
     
     ### Field references and variable expressions
@@ -399,9 +437,9 @@ info:
     Certain properties within a process model may contain references
     to fields.
     
-     * **Relative due dates** are specified relative to date fields
-       (e.g. 24 hours after process-started-hour).
-     * Task `text` values can include **variable expressions**.
+     * **Relative due dates** specify task due dates relative to
+       date fields (e.g. 24 hours after process-started-hour).
+     * Task `text` values may include **variable expressions**.
     
     A variable expression is delimited by curly braces, like `{my-field-name}`.
     The expression may specify only a field name, or it may specify a field name
@@ -409,6 +447,9 @@ info:
     
      * `{my-field-name}`
      * `{my-field-name:format-string}`
+    
+    Format strings specify how a non-text value – such as a date – should be
+    rendered as text.
      
     #### Formats for `date-time` fields
 
@@ -457,25 +498,25 @@ info:
         
     ## Process activity stream
     
-    TeamworkIQ supports an activity stream that allows client programs to
+    TeamworkIQ supports an **activity stream** that allows client programs to
     retrieve process history and track process, task, role and field data
     events.
     
-    The Activity Stream feature can be used part of an audit trail mechanism,
-    or it can be used to trigger actions in external systems as events are
-    detected in a process.
+    The Activity Stream feature can be used as part of an audit trail mechanism,
+    or it can be used to trigger actions in external systems as workflow events
+    are detected.
     
-    In most cases, a client program will focus its activity stream monitoring
-    on a single process, or on processes that are based on a single template
-    or a set of related templates. In many cases, too, a client program is only
-    interested in certain tasks, roles or fields that belong to certain templates.
+    In most cases, a client program focuses its activity monitoring on workflows
+    that have been launched from a single process template. In many cases, the
+    client is only interested in certain certain tasks, and will only need to
+    track certain activities and access certain fields.
     
-    Suppose that a client program is designed to perform an action when
-    a task 5043 is completed in a certain workflow. The client should
-    monitor processes that are based on one process template, and should
-    only track TASK_COMPLETED activities for task 5043.
+    For example, a client program might be designed to perform an action when
+    task 5043 is completed within a certain process. The client should
+    monitor processes that are based on a particular process template, and
+    should only track TASK_COMPLETED activities for task 5043.
     
-    However, such a client might also want to respond if task 5043 is reopened,
+    However, such a client might also need to respond if task 5043 is reopened,
     so perhaps TASK_REOPENED activities should also be tracked.
     
     # Requests and Responses
@@ -495,13 +536,13 @@ info:
      - `/api/v3/info/{acc}/info`
      - ...
 
-    **Template** resource paths look like this:
+    **Process Template** resource paths look like this:
 
      - `/api/v3/templates/{acc}/{tpl_no}/{params}`
      - `/api/v3/templates/{acc}/{tpl_no}/commands/{command}`
      - ...
 
-    **Process instance** resource paths look like this:
+    **Process Workflow** resource paths look like this:
 
      - `/api/v3/processes/{acc}/{process_no}/{params}`
      - `/api/v3/processes/{acc}/{process_no}/commands/{command}`
@@ -510,9 +551,9 @@ info:
 
     ## Request Body
 
-    If a request requires a body (the data that's usually provided with a POST
-    or PUT), its content type is ALWAYS JSON. No other format, unless otherwise
-    specified (e.g. TXT, HTML or XML), is ever accepted.
+    An HTTP POST or PUT request usually includes a body. Unless otherwise
+    specified, the Content-type of such a request must always be
+    `application/json`; no other content type is supported.
 
     # Testing and troubleshooting requests
 
@@ -675,7 +716,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/info/{acc}/access`);
+            requestHttp(`/api/v3/info/${acc}/access`);
 
       x-ignore-this: ignore this
   /v3/info/{acc}/builtin-fields:
@@ -899,7 +940,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/accounts/{acc}/users`);
+            requestHttp(`/api/v3/accounts/${acc}/users`);
 
       x-ignore-this: ignore this
   /v3/accounts/{acc}/groups:
@@ -1005,22 +1046,24 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/accounts/{acc}/groups`);
+            requestHttp(`/api/v3/accounts/${acc}/groups`);
 
       x-ignore-this: ignore this
   /v3/activities/{acc}/process:
     get:
-      summary: "Query process activities"
+      summary: "Query activities by process template"
       tags:
         - Activity Stream API
       description: |
-        This operation queries the account's process activity stream,
-        returning a record of process activities such as `PROC_STARTED`
+        This operation queries the account's workflow activity stream,
+        returning a record of workflow activities such as `PROC_STARTED`
         and `TASK_COMPLETED`.
-
+      
         Overly broad queries will perform poorly, so ALWAYS use the
-        query parameters – especially the `template` parameter – 
-        to restrict the scope of your query.
+        query parameters to restrict the scope of your query.
+        
+        This query searches the activity streams of all workflows
+        that were launched from the specified process template.
       parameters:
         - name: acc
           in: path
@@ -1035,7 +1078,7 @@ paths:
           schema:
             type: integer
             format: int32
-          description: Template number
+          description: Process Template number
           example: 12345
         - name: task
           in: query
@@ -1044,8 +1087,8 @@ paths:
             type: integer
             format: int32
           description: |
-            Task number.
-
+            Task number
+        
             If this parameter is specified, then the server should only
             return activities that are associated with the specified task.
           example: 5002
@@ -1057,7 +1100,7 @@ paths:
             format: csv
           description: |
             A comma-separated-values string, where the values are Activity Types.
-
+        
             If this parameter is specified, then the server should only return
             activities whose types are included in the specified list.
           example: "TASK_COMPLETED,TASK_SKIPPED"
@@ -1069,13 +1112,16 @@ paths:
             format: int64
           description: |
             Number of msec since midnight Jan 1, 1970 UTC.
-
+        
             If this parameter is specified, then the operation is to
             return only activities whose timestamps are greater than
             this value.
-
+        
             If this parameter is NOT specified, then the default is
             24 hours before the current moment.
+  
+            If the query specifies after=0, this means "give me all
+            events, no matter how old they are."
           example: 1581001439775
         - name: until
           in: query
@@ -1085,11 +1131,11 @@ paths:
             format: int64
           description: |
             Number of msec since midnight Jan 1, 1970 UTC.
-
+        
             If this parameter is specified, then the operation is to
             return only activities whose timestamps are less than or
             equal to this value.
-
+        
             If no value is specified, the default is the current moment.
           example: 1581001439775
       responses:
@@ -1161,7 +1207,7 @@ paths:
           source: |
             let https = require('https');
             const api_key = "..." // See "Securing your API Keys"
-
+        
             const requestHttp = (path) => {
                 const options = {
                     hostname: 'api.teamworkiq.com',
@@ -1173,42 +1219,230 @@ paths:
                         'x-api-key': api_key
                     },
                 };
-
+        
                 const req = https.request(options, (res) => {
                     console.log(`Status code: ${res.statusCode}\n`);
-
+        
                     res.on('data', (d) => {
                         console.log('Response:');
                         process.stdout.write(d);
                         console.log();
                     });
                 });
-
+        
                 req.on('erorr', (e) => {
                     console.error(e);
                 });
-
+        
                 req.end();
             };
-
-            requestHttp(`/api/v3/activities/{acc}/process?template={tpl}`);
-
+        
+            requestHttp(`/api/v3/activities/${acc}/process?template={tpl}`);
+    
+      x-ignore-this: ignore this
+  /v3/activities/{acc}/process/{pro}:
+    get:
+      summary: "Query activities by process workflow"
+      tags:
+        - Activity Stream API
+      description: |
+        This operation queries the account's workflow activity stream,
+        returning a record of process activities such as `PROC_STARTED`
+        and `TASK_COMPLETED`.
+      
+        This query searches the activity stream of a single process workflow.
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 5432
+        - name: task
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          description: |
+            Task number.
+        
+            If this parameter is specified, then the server should only
+            return activities that are associated with the specified task.
+          example: 5002
+        - name: types
+          in: query
+          required: false
+          schema:
+            type: string
+            format: csv
+          description: |
+            A comma-separated-values string, where the values are Activity Types.
+        
+            If this parameter is specified, then the server should only return
+            activities whose types are included in the specified list.
+          example: "TASK_COMPLETED,TASK_SKIPPED"
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: |
+            Number of msec since midnight Jan 1, 1970 UTC.
+        
+            If this parameter is specified, then the operation is to
+            return only activities whose timestamps are greater than
+            this value.
+        
+            If this parameter is NOT specified, then the default is
+            24 hours before the current moment.
+  
+            If the query specifies after=0, this means "give me all
+            events, no matter how old they are."
+          example: 1581001439775
+        - name: until
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: |
+            Number of msec since midnight Jan 1, 1970 UTC.
+        
+            If this parameter is specified, then the operation is to
+            return only activities whose timestamps are less than or
+            equal to this value.
+        
+            If no value is specified, the default is the current moment.
+          example: 1581001439775
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessActivityResp"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/activities/{acc}/process/{pro}"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/activities/${acc}/process/${pro}`);
+    
       x-ignore-this: ignore this
   /v3/processes/{acc}/{pro}/data:
     get:
-      summary: "Get published field data for a process"
+      summary: "Get published field data for a process workflow"
       tags:
-        - Process API
+        - Process Workflow API
+        - Data API
       description: |
         This operation gets all published field data for all of the form
-        fields and built-in fields of a process.
+        fields and built-in fields of a process workflow.
 
         When a form is submitted, the updated field values are stored
         as a *draft submission* until the data is *published*. See
         [Life cycle of form submissions](https://help.teamworkiq.com/en/articles/4106911).
 
         The value returned by this operation is a JSON object. The
-        property names are the names of all fields in the process that
+        property names are the names of all fields within the workflow that
         have published values, plus the names of all of the "built-in"
         fields such as `process-link`. The values of the properties are
         the values of the fields.
@@ -1226,7 +1460,7 @@ paths:
           schema:
             type: integer
             format: int32
-          description: Process number
+          description: Process workflow number
           example: 123
       responses:
         200:
@@ -1327,77 +1561,1853 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/processes/{acc}/{pro}/data`);
+            requestHttp(`/api/v3/processes/${acc}/${pro}/data`);
 
       x-ignore-this: ignore this
+
+  /v3/processes/{acc}/{pro}/commands/stop:
+    post:
+      summary: Stop the process workflow
+      tags:
+        - Process Workflow API
+      description: |
+        This operation stops an IN_PROGRESS or PAUSED process workflow. The workflow's status
+        changes to DONE, and its result changes to STOPPED.
+        Attempting to stop a workflow whose status is already DONE, or whose status is DRAFT,
+        will fail (HTTP status 403).
+  
+        The client may optionally specify a comment when stopping a workflow.
+  
+        [More information about the process life cycle](https://help.teamworkiq.com/en/articles/1948912)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+            It may be included in notifications.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/processes/{acc}/{pro}/commands/stop"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    }
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body)
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/processes/${acc}/${pro}/commands/stop`);
+    
+      x-ignore-this: ignore this
+      
+
+  /v3/tasks/{acc}/{pro}/{task}/commands/complete:
+    post:
+      summary: Complete a task
+      tags:
+        - Task API
+      description: |
+        This operation completes the specified task. It changes the task status
+        to DONE and the task result to COMPLETED. Of course, a task must be started
+        before it can be completed; so if the task status is WAITING, this
+        operation first starts the task and then completes it.
+  
+        If the task is DISABLED or already DONE, or if the process workflow
+        is not IN_PROGRESS, then the request will fail (status 403).
+  
+        If the list containing the task is a
+        [strict](https://help.teamworkiq.com/en/articles/4189076) numbered
+        list, then the request will fail if the task is not yet `ready`
+        (status 403).
+        
+        If an actor attempts to complete a list task, rather than a basic task,
+        then the request will fail; the only way to complete a list task is to
+        complete or skip all of its subtasks.
+  
+        #### Flows
+  
+        When an actor successfully completes a subtask, the subtask's parent
+        list controls what happens next.
+        
+          * When an actionable numbered list starts, its subtasks become
+            actionable in sequence; as one subtask is completed, the next
+            subtask becomes actionable.
+
+          * When an actionable bullet list starts, all of its subtasks
+            immediately become actionable; so completing a subtask has
+            no effect on whether subsequent tasks are actionable.
+  
+        In either type of list, completing the list's last subtask that is neither
+        DONE nor DISABLED causes the list to complete as well. Completing the last
+        unfinished subtask of the Root Task completes the process workflow
+        (status = DONE, result = COMPLETED).
+  
+        [More information about task state](https://help.teamworkiq.com/en/articles/4201443)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/complete"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+  
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/complete`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/skip:
+    post:
+      summary: Skip an optional task
+      tags:
+        - Task API
+      description: |
+        This operation skips the specified optional task. It changes the task status
+        to DONE and the task result to SKIPPED. If the specified task is a list, then
+        this operation disables all of the task's subtasks and all of their descendants,
+        setting their statuses to DISABLED.
+  
+        If the target task is DISABLED or already DONE, or if the process workflow
+        is not IN_PROGRESS, then the request will fail (status 403).
+  
+        If the list containing the target task is a
+        [strict](https://help.teamworkiq.com/en/articles/4189076) numbered
+        list, then the request will fail if the task is not yet `ready`
+        (status 403).
+        
+        Unlike completing a task, skipping a task does not automatically start it.
+  
+        #### Flows
+  
+        When an actor successfully skips a subtask, the subtask's parent
+        list controls what happens next.
+  
+          * When an actionable numbered list starts, its subtasks become
+            actionable in sequence; as one subtask is completed, the next
+            subtask becomes actionable.
+
+          * When an actionable bullet list starts, all of its subtasks
+            immediately become actionable; so completing a subtask has
+            no effect on whether subsequent tasks are actionable.
+  
+        In either type of list, skipping the list's last subtask that is neither
+        DONE nor DISABLED causes the list to complete as well. Skipping the last
+        unfinished subtask of the Root Task completes the process workflow
+        (status = DONE, result = COMPLETED).
+  
+        [More information about task state](https://help.teamworkiq.com/en/articles/4201443)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/skip"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+  
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/skip`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/start:
+    post:
+      summary: Start a WAITING task
+      tags:
+        - Task API
+      description: |
+        This operation starts the specified task. If the task's status is WAITING,
+        then this operation changes the task status to IN_PROGRESS. If the task's
+        parent list has not yet started, then the list will start first.
+      
+        If the task is not WAITING, or if the process workflow is not
+        IN_PROGRESS, then the request will fail.
+  
+        If the list containing the task is a
+        [strict](https://help.teamworkiq.com/en/articles/4189076) numbered
+        list, then the request will fail if the task is not yet `ready`
+        (status 403).
+  
+        If an actor attempts to start a list task, rather than a basic task,
+        then the request will fail; the only way to start a list task is to
+        cause it to become actionable, at which point it will auto-start.
+      
+        A List task that is ready automatically starts; there is no need
+        to start it manually. A List task automatically starts when any
+        of its children starts; there is no need to start it manually.
+        
+        Certain task operations can only be performed on a task that is
+        IN_PROGRESS. For example, submitting form data and creating task
+        notes can only be performed while a task is IN_PROGRESS. Therefore,
+        a task must be started before such operations may be performed.
+      
+        [More information about task state](https://help.teamworkiq.com/en/articles/4201443)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/start"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+  
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+          
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/start`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/pause:
+    post:
+      summary: Pause an IN_PROGRESS task
+      tags:
+        - Task API
+      description: |
+        This operation pauses the specified task. If the task's status is IN_PROGRESS,
+        then this operation changes the task status back to WAITING.
+  
+        If the task is not IN_PROGRESS, or if the process workflow is not
+        IN_PROGRESS, then the request will fail (status 403).
+  
+        If an actor attempts to pause a list task, rather than a basic task,
+        then the request will fail (status 403).
+  
+        A strict List task that changes from ready to early automatically
+        pauses, reopening and pausing all of its subtasks.
+        
+        [More information about task state](https://help.teamworkiq.com/en/articles/4201443)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/pause"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+  
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/pause`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/reopen:
+    post:
+      summary: Reopen a DONE task
+      tags:
+        - Task API
+      description: |
+        This operation reopens the specified DONE (completed or skipped) task.
+      
+        If the task is not DONE, then the request will fail.
+      
+        When a client successfully reopens a DONE task, the task's status changes to WAITING.
+        But in some cases, it may automatically change to IN_PROGRESS, e.g. if the task
+        has an auto-start feature and the task is `actionable`.
+      
+        #### Flows
+      
+        If reopening a task causes subsequent DONE tasks to change from `ready` to `not
+        ready`, then these tasks will automatically reopen as well.
+      
+        Reopening a subtask of a DONE list will also reopen the parent list; naturally,
+        if someone is working on the subtask, which is a piece of the parent task, then
+        someone is working on the parent task as well.
+      
+        [More information about task state](https://help.teamworkiq.com/en/articles/4201443)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/reopen"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/reopen`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/publish:
+    post:
+      summary: Publish task data
+      tags:
+        - Task API
+        - Data API
+      description: |
+        When invoked on a task that has a form, this operation publishes the form's
+        [draft submission](https://help.teamworkiq.com/en/articles/4106911). As a result:
+      
+          - The draft submission becomes visible to workflow participants who are
+            not assignees of the task.
+      
+          - Variable expressions and relative due dates that depend on the form's
+            fields are updated based on the draft submission.
+      
+        If the task is not IN_PROGRESS, then the request will fail.
+        
+        #### Launch Form
+        
+        In the process model, the Launch Form is the form of the root task.
+        If an API client program submits new values for the fields of the
+        Launch Form, the update remains a **draft submission** until
+        it is published. To publish the draft submission, the client program
+        must send a Publish request to task 5001.
+        
+        [Life cycle of form submissions](https://help.teamworkiq.com/en/articles/4106911)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/publish"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/publish`);
+    
+      x-ignore-this: ignore this
+  /v3/tasks/{acc}/{pro}/{task}/commands/unpublish:
+    post:
+      summary: Unublish task data
+      tags:
+        - Task API
+        - Data API
+      description: |
+        When invoked on a task that has a form, this operation unpublishes the form's
+        [field data](https://help.teamworkiq.com/en/articles/4106911). As a
+        result:
+      
+          - The previously-published data becomes invisible to workflow participants
+            who are not assignees of the task.
+      
+          - The values of variable expressions and relative due dates that
+            depend on the form's fields are reset to the default values of the form
+            fields.
+      
+        If the task is not IN_PROGRESS, then the request will fail.
+      
+        [Life cycle of form submissions](https://help.teamworkiq.com/en/articles/4106911)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Comment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            If provided, this optional comment will be included in activity
+            stream records that are written as a result of this request.
+          example: "Task completed as required"
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmptyObject"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/commands/unpublish"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const body = '{}'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/commands/unpublish`);
+    
+      x-ignore-this: ignore this
+
+  /v3/tasks/{acc}/{pro}/{task}/data:
+    get:
+      summary: "Get latest field data for a task"
+      tags:
+        - Task API
+        - Data API
+      description: |
+        This operation gets the data for the task's form fields.
+        It will return the latest value for each field, even if
+        that value has not been published yet.
+      
+        See [Life cycle of form data](https://help.teamworkiq.com/en/articles/4106911)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FieldValues"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/data"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/data`);
+    
+      x-ignore-this: ignore this
+    put:
+      summary: "Submit field data for a task"
+      tags:
+        - Task API
+        - Data API
+      description: |
+        This operation submits field data for the task's form.
+        
+        If the task is not IN_PROGRESS, then the request will fail.
+  
+        See [Life cycle of form data](https://help.teamworkiq.com/en/articles/4106911)
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Task number
+          example: 5002
+        - name: X-TeamworkIQ-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Request ID. This optional header allows you to specify a request ID.
+            The request ID will be included in activity stream events that are
+            written as a result of this request.
+          example: "f2de0a1e664c45bd8c8a0f9dda3e8783"
+      requestBody:
+        description: |
+          The request body is a JSON object. The object property names are
+          form field names. The object property values are the field values.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FieldValues"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X PUT \
+                -H 'x-api-key: {api_key}' \
+                -H 'Content-Type: application/json' \
+                -d '{ "hello": "world", "hire-date": "1594361522484" }' \
+                'https://api.teamworkiq.com/api/v3/tasks/{acc}/{pro}/{task}/data'
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+            
+            let task_form_data = '{ "hello": "world", "hire-date": "1594361522484" }';
+      
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'PUT',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    }
+                };
+      
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+      
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+      
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+            
+                req.write(task_form_data)
+                req.end();
+            };
+      
+            requestHttp(`/api/v3/tasks/${acc}/${pro}/${task}/data`);
+  
+      x-ignore-this: ignore this
+
   /v3/files/{acc}/{pro}/{file}/download:
     get:
       summary: "Get File Download Information"
       tags:
         - File API
+        - Data API
       description: |
         This operation gets the File Download Information for a file
         that has been attached/uploaded though a `file` type field
         in a task form.
-  
+      
         The File Download Information is a JSON object that contains a
         `download_url` property. The value of the download url is a short-lived,
         signed, download URI that can be used to securely download the actual file.
-  
+      
         The download URI is 'short-lived' because it expires in 15 minutes. It grants
         access to an object in an Amazon Web Services S3 bucket.
         A simple GET request to the signed S3 URI retrieves the file value
         of the form field.
-        
+      
         When sending requests to the S3 URI, do **not** include your TeamworkIQ credentials.
-
+      
         See also
-        [TeamworkAPI: File Download](https://help.teamworkiq.com/en/collections/4134237).
-  
+        [TeamworkIQ API: File Download](https://help.teamworkiq.com/en/articles/4134237).
+      
         ### File Download Information URI vs. File Download URI
-  
+      
         How can your client download files that have been attached to a process?
-
+      
         When the client fetches the process data, the value returned by each
         File field contains an array of File Info objects. Each File Info object
         has a `url` property that specifies the File Download Information URI for
         one uploaded file.
-
+      
         The File Download Information URI is long-lived. Unlike the
         short-lived S3 URI, the File Download Information URI does
         *not* expire after 15 minutes. Your client application may safely
         persist the File Download Information URI for later use.
-
+      
         Remember that there are two different URIs:
-
+      
          * The `.../download` URI returns a File Download Information
            object, not the file itself.
-
+      
          * The `download_url` of the File Download Information object specifies
            a short-lived URI that allows your client to download the file.
-  
+      
         ### Warnings
-  
+      
         #### Short-lived download_url is sensitive information
-  
+      
         While the short-lived S3 URI remains valid (for 15 minutes),
         it allows a client to directly download the target file.
         If the target file contains sensitive information, you must treat
         this URI as though it were a password.
-        
+      
         Fetch the File Download Information object only when you need to use
         it immediately. After you have downloaded the target file, destroy
         the File Download Information object.
-        
+      
         A client program should **never** do the following things with the
         short-lived S3 URI:
-        
+      
          * Never write it to a log file.
          * Never share it with other programs or users.
          * Never store it in a database or other application.
          * Never store it in memory for long periods of time.
          * Never render it in a web page.
-        
+      
         If you need to store within your client a reference to an attached file,
         store long-lived `.../download` URI that returns a File Download Information
         object. Code your application so that when it needs to download the file,
@@ -1417,7 +3427,7 @@ paths:
           schema:
             type: integer
             format: int32
-          description: Process number
+          description: Process workflow number
           example: 123
         - name: file
           in: path
@@ -1491,12 +3501,12 @@ paths:
         - lang: cURL
           source: |
             curl -H "x-api-key: {api_key}" \
-               "https://api.teamworkiq.com/api/v3/processes/{acc}/{pro}/{file}/download"
+               "https://api.teamworkiq.com/api/v3/files/{acc}/{pro}/{file}/download"
         - lang: Node
           source: |
             let https = require('https');
             const api_key = "..." // See "Securing your API Keys"
-
+        
             const requestHttp = (path) => {
                 const options = {
                     hostname: 'api.teamworkiq.com',
@@ -1508,32 +3518,694 @@ paths:
                         'x-api-key': api_key
                     },
                 };
-
+        
                 const req = https.request(options, (res) => {
                     console.log(`Status code: ${res.statusCode}\n`);
-
+        
                     res.on('data', (d) => {
                         console.log('Response:');
                         process.stdout.write(d);
                         console.log();
                     });
                 });
-
+        
                 req.on('erorr', (e) => {
                     console.error(e);
                 });
-
+        
                 req.end();
             };
-
-            requestHttp(`/api/v3/processes/{acc}/{pro}/{file}/download`);
-
+        
+            requestHttp(`/api/v3/files/${acc}/${pro}/${file}/download`);
+    
       x-ignore-this: ignore this
+  /v3/files/{acc}/{pro}/{file}/upload:
+    get:
+      summary: "Get File Upload Information"
+      tags:
+        - File API
+        - Data API
+      description: |
+        This operation gets File Upload Information for a File object.
+      
+        The File Upload Information is a JSON object that contains a
+        `upload_url` property. The value of the upload url is a new
+        short-lived, signed, upload URI that can be used to securely
+        upload the file.
+        
+        The upload URI is 'short-lived' because it expires in 15 minutes. It grants
+        access to an object in an Amazon Web Services S3 bucket. A simple PUT
+        request to the signed S3 URI uploads the file.
+      
+        When sending requests to the S3 URI, do **not** include your TeamworkIQ credentials.
+      
+        ### File Upload Information URI vs. File Upload URI
+      
+        How can an API client program upload files to a process?
+        
+        First, the client must create a File object to represent the file that will
+        be uploaded. This gives the client program a short-lived upload URI, which allows
+        the client program to upload the file. The client must PUT the file to the upload
+        URI before that URI expires. If the client program needs to upload the file after
+        the URI expires, the client must obtain a new short-lived upload URI. To do so,
+        the client program must fetch a File Upload Info object, which contains a new
+        short-lived upload URI.
+        
+        After the file has been uploaded, it is invisible (even to the uploader) until
+        the upload is committed. After the commit, the file information must be added
+        to the JSON value of the file field in order to make the file available via the
+        file field.
+        
+        The File Upload Information URI is long-lived. Unlike the
+        short-lived S3 URI, the File Upload Information URI does
+        *not* expire after 15 minutes. Your client application may safely
+        persist the File Upload Information URI for later use.
+      
+        Remember that there are two different URIs:
+      
+         * The `.../upload` URI returns a File Upload Information
+           object, not the file itself.
+      
+         * The `upload_url` of the File Upload Information object specifies
+           a short-lived URI that allows your client to upload the file.
+      
+        ### Warnings
+      
+        #### Short-lived upload_url is sensitive information
+      
+        While the short-lived S3 URI remains valid (for 15 minutes),
+        it allows a client to directly upload the target file.
+        If the target file contains sensitive information, you must treat
+        this URI as though it were a password.
+      
+        Fetch the File Upload Information object only when you need to use
+        it immediately. After you have uploaded the target file, destroy
+        the File Upload Information object.
+      
+        A client program should **never** do the following things with the
+        short-lived S3 URI:
+      
+         * Never write it to a log file.
+         * Never share it with other programs or users.
+         * Never store it in a database or other application.
+         * Never store it in memory for long periods of time.
+         * Never render it in a web page.
+      
+        If you need to store within your client a link that makes it possible
+        to upload a file, store long-lived `.../download` URI that returns a
+        File Upload Information object. Code your application so that when it
+        needs to upload the file, it uses that stored URI to fetch the File Upload
+        Information object and immediately uses the information in the FUI
+        object to upload the file.
+  
+        For more information about uploading files to form fields via the TeamworkIQ API, see
+        [TeamworkIQ API: File Upload](https://help.teamworkiq.com/en/articles/4254032).
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            format: alphanumeric
+          description: File ID
+          example: hk98765ToP87m6dcriq3hprR2O123456
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadInfo"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1403207
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -H "x-api-key: {api_key}" \
+               "https://api.teamworkiq.com/api/v3/files/{acc}/{pro}/{file}/upload"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'GET',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/files/${acc}/${pro}/${file}/upload`);
+    
+      x-ignore-this: ignore this
+  /v3/files/{acc}/{pro}:
+    post:
+      summary: "Create a File object to receive uploads"
+      tags:
+        - File API
+        - Data API
+      description: |
+        This operation creates a File object within the process.
+        The File object allows the client to upload a file to the server.
+      
+        The File object allows the client to upload updated versions of
+        the file, but if the client needs to add a different file, then
+        a separate File object must be created.
+      
+        For example, if the client needs to upload two files – photo.png
+        and info.pdf – then the client must create two File objects. But
+        if the client needs to update info.pdf with a newer version of that
+        file, the client does NOT need to create a new File object; it should
+        use the existing File object for info.pdf instead.
+      
+        The operation returns a JSON response object that contains a file number
+        and a short-lived Upload URI that can be used to upload a file.
+      
+        If the short-lived upload URI expires, the client program must send a
+        GET request to `/v3/files/{acc}/{pro}/{file}/upload` to obtain a new one.
+      
+        For more information about uploading files to form fields via the TeamworkIQ API, see
+        [TeamworkIQ API: File Upload](https://help.teamworkiq.com/en/articles/4254032).
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileCreateRequest"
+            example: { "purpose": "DATA", "task_no": 5004 }
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileCreateResponse"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1403207
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{ "purpose": "DATA", "task_no": {task_no} }' \
+              "https://api.teamworkiq.com/api/v3/files/{acc}/{pro}"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..." // See "Securing your API Keys"
+        
+            const body = '{ "purpose": "DATA", "task_no": 5004 }'
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    }
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body);
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/files/${acc}/{pro}`);
+    
+      x-ignore-this: ignore this
+  /v3/files/{acc}/{pro}/{file}/commit:
+    put:
+      summary: "Commit a file upload"
+      tags:
+        - File API
+      description: |
+        This operation commits a file upload so that the file can be
+        accessed via a file download URI. Until this operation completes
+        successfully, the file cannot be downloaded (even by the uploader).
+        
+        The `commit` operation only succeeds if both task and process are
+        `IN_PROGRESS`.
+  
+        For more information about uploading files to form fields via the TeamworkIQ API, see
+        [TeamworkIQ API: File Upload](https://help.teamworkiq.com/en/articles/4254032).
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            format: alphanumeric
+          description: File ID
+          example: hk98765ToP87m6dcriq3hprR2O123456
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileCommitRequest"
+            example:
+              version: "1234567890abcdefghij"
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyObject"
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1403207
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X PUT \
+               -H "x-api-key-id: {api_key}" \
+               -H "Content-Type: application/json" \
+               -d '{ "purpose": "DATA", "task_no": {task_no} }' \
+               "https://api.teamworkiq.com/api/v3/files/{acc}/{pro}/{file}/commit"
+        - lang: Node
+          source: |
+            let https = require('https');
+            
+            const api_key = "..." // See "Securing your API Keys"
+            const s3_object_version = "..." // Replace with the value of the x-amz-version-id response header
+            
+            const body = JSON.stringify( { 'version' => s3_object_version } )
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'PUT',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    }
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.write(body)
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/files/${acc}/${pro}/${file}/commit`);
+    
+      x-ignore-this: ignore this
+  /v3/files/{acc}/{pro}/{file}:
+    delete:
+      summary: "Delete a file"
+      tags:
+        - File API
+      description: |
+        This operation deletes a file. Once the file has been deleted, all
+        subsequent upload and download operations on the file will fail.
+      
+        The `delete` operation only succeeds if both task and process are
+        `IN_PROGRESS`.
+      
+        For more information about uploading files to form fields via the TeamworkIQ API, see
+        [TeamworkIQ API: File Upload](https://help.teamworkiq.com/en/articles/4254032).
+      parameters:
+        - name: acc
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Account number
+          example: 12345
+        - name: pro
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: Process workflow number
+          example: 123
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            format: alphanumeric
+          description: File ID
+          example: hk98765ToP87m6dcriq3hprR2O123456
+      responses:
+        204:
+          description: Success
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1403207
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X DELETE \
+               -H "x-api-key-id: {api_key}" \
+               -H "Content-Type: application/json" \
+               "https://api.teamworkiq.com/api/v3/files/{acc}/{pro}/{file}"
+        - lang: Node
+          source: |
+            let https = require('https');
+        
+            const api_key = "..." // See "Securing your API Keys"
+            const s3_object_version = "..." // Replace with the value of the x-amz-version-id response header
+        
+            const requestHttp = (path) => {
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'DELETE',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    }
+                };
+        
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+        
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+        
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+        
+                req.end();
+            };
+        
+            requestHttp(`/api/v3/files/${acc}/${pro}/${file}`);
+    
+      x-ignore-this: ignore this
+
   /v3/processes/{acc}/{pro}:
     get:
-      summary: "Get a process"
+      summary: "Get a process workflow"
       tags:
-        - Process API
+        - Process Workflow API
       description: |
         This operation returns the current
         state of the requested process.
@@ -1551,7 +4223,7 @@ paths:
           schema:
             type: integer
             format: int32
-          description: Process number
+          description: Process workflow number
           example: 123
       responses:
         200:
@@ -1652,7 +4324,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/processes/{acc}/{pro}`);
+            requestHttp(`/api/v3/processes/${acc}/{pro}`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}:
@@ -1812,7 +4484,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}?rev={rev}&name={name}`);
+            requestHttp(`/api/v3/templates/${acc}?rev=${rev}&name=${name}`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}:
@@ -1962,7 +4634,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}/{tpl}`);
+            requestHttp(`/api/v3/templates/${acc}/${tpl}`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/revs/p:
@@ -2139,7 +4811,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}/{tpl}/revs/p`);
+            requestHttp(`/api/v3/templates/${acc}/${tpl}/revs/p`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/params:
@@ -2147,13 +4819,31 @@ paths:
       summary: "Get launch parameters for a template"
       tags:
         - Process Template API
-      deprecated: true
       description: |
-        This operation is deprecated. Use
-        `GET /v3/templates/{acc}/{tpl}/revs/p/params`
-        instead.
-        
-        This operation gets the launch parameters for the specified template.
+        This operation gets the launch parameters for the published revision of the
+        specified template.
+  
+        For the published revision of this template, get the Launch Form definition.
+        The Launch Form definition specifies the fields whose values may be submitted
+        when launching a new process from this template. These fields are known as
+        Launch Parameters.
+  
+        Launch Parameters can only be fetched for the published revision of the template.
+        An unpublished template does not allow the client to fetch Launch Parameters.
+  
+        ### 200 (Success) case
+  
+        When this operation returns Success (200), the returned FieldsResponse object
+        has a `fields` property. This fields property specifies the Launch Form
+        fields that the client may specify when using this template to launch a new
+        process.
+  
+        The sample field data displayed in the 200 case is what you would see if the
+        template's Launch Form specifies a text field named `business-name`,
+        a date-time field named `meeting-date` and a select field named
+        `region`. When you use your own process template, your custom forms will
+        contain arbitrary sets of fields, and these will have whatever names
+        you have specified in your template.
       parameters:
         - name: "acc"
           in: "path"
@@ -2294,7 +4984,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}/{tpl}/params`);
+            requestHttp(`/api/v3/templates/${acc}/${tpl}/params`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/revs/p/params:
@@ -2303,30 +4993,11 @@ paths:
       tags:
         - Process Template API
       description: |
-        This operation gets the launch parameters for the published revision of the
-        specified template.
+        This operation is deprecated. Use
+        `GET /v3/templates/{acc}/{tpl}/params` instead.
   
-        For the published revision of this template, get the Launch Form definition.
-        The Launch Form definition specifies the fields whose values may be submitted
-        when launching a new process from this template. These fields are known as
-        Launch Parameters.
-
-        Launch Parameters can only be fetched for the published revision of the template.
-        An unpublished template does not allow the client to fetch Launch Parameters.
-
-        ### 200 (Success) case
-
-        When this operation returns Success (200), the returned FieldsResponse object
-        has a `fields` property. This fields property specifies the Launch Form
-        fields that the client may specify when using this template to launch a new
-        process.
-
-        The sample field data displayed in the 200 case is what you would see if the
-        template's Launch Form specifies a text field named `business-name`,
-        a date-time field named `meeting-date` and a select field named
-        `region`. When you use your own process template, your custom forms will
-        contain arbitrary sets of fields, and these will have whatever names
-        you have specified in your template.
+        This operation gets the launch parameters for the specified template.
+      deprecated: true
       parameters:
         - name: "acc"
           in: "path"
@@ -2467,7 +5138,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}/{tpl}/revs/p/params`);
+            requestHttp(`/api/v3/templates/${acc}/${tpl}/revs/p/params`);
 
       x-ignore-this: ignore this
   /v3/templates/{acc}/{tpl}/commands/launch:
@@ -2475,173 +5146,19 @@ paths:
       summary: "Launch a new process from a template"
       tags:
         - Process Template API
-      deprecated: true
-      description: |
-        This operation is deprecated. Use
-        `POST /v3/templates/{acc}/{tpl}/revs/p/commands/launch`
-        instead.
-        This operation launches a new process based on the published revision
-        of the specified template.
-      parameters:
-        - name: "acc"
-          in: "path"
-          required: true
-          schema:
-            type: "integer"
-          description: Account number
-          example: 12345
-        - name: "tpl"
-          in: "path"
-          required: true
-          schema:
-            type: "integer"
-          description: Template number
-          example: 54321
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LaunchCommand"
-            example:
-              launch_params:
-                "business-name": "Acme Inc."
-                "meeting-date": "1600496307258"
-                "region":
-                  - west
-        required: true
-      responses:
-        201:
-          description: Success
-          headers:
-            Location:
-              schema:
-                type: "string"
-                format: "uri"
-              description: "Contains the URI for the newly launched process"
-          content: {}
-        400:
-          description: "Bad Request: Invalid request parameters."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                status: 400
-                code: 1400001
-        401:
-          description: "Unauthorized: Invalid or missing API key."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorWithMsg"
-              example:
-                status: 401
-                message: "A message string"
-        403:
-          description: "Forbidden: No access permissions."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                status: 403
-                code: 1400013
-        404:
-          description: "Not Found: The requested resource could not be found."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorWithMsg"
-              example:
-                status: 404
-                message: "A message string"
-        429:
-          description: "Too Many Requests: Request throttled or Quota exceeded."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                status: 429
-                code: 1429001
-        500:
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorWithMsg"
-      security:
-        - api_key: []
-      x-code-samples:
-        - lang: cURL
-          source: |
-            curl -H "x-api-key: {api_key}" \
-              -X POST -i \
-              -H "Content-Type: application/json" \
-              -d '{"launch_params":{"business-name":"Acme Inc.","meeting-date":"1580610161378"}}' \
-              "https://api.teamworkiq.com/api/v3/templates/{acc}/{tpl}/commands/launch"
-        - lang: Node
-          source: |
-            let https = require('https');
-            const api_key = "..."; // See "Securing your API Keys"
-
-            const requestHttp = (path, data) => {
-                const body = JSON.stringify(data);
-                const options = {
-                    hostname: 'api.teamworkiq.com',
-                    port: 443,
-                    path: path,
-                    method: 'POST',
-                    headers: {
-                        'Content': 'application/json',
-                        'x-api-key': api_key
-                    },
-                };
-
-                const req = https.request(options, (res) => {
-                    console.log(`Status code: ${res.statusCode}\n`);
-
-                    res.on('data', (d) => {
-                        console.log('Response:');
-                        process.stdout.write(d);
-                        console.log();
-                    });
-                });
-
-                req.on('erorr', (e) => {
-                    console.error(e);
-                });
-
-                req.write(body);
-                req.end();
-            };
-
-            requestHttp(`/api/v3/templates/{acc}/{tpl}/commands/launch`, {
-              launch_params: {
-                "business-name":"Acme Inc.",
-                "meeting-date":"1580610161378"
-              }
-            });
-
-      x-ignore-this: ignore this
-  /v3/templates/{acc}/{tpl}/revs/p/commands/launch:
-    post:
-      summary: "Launch a new process from a template revision"
-      tags:
-        - Process Template API
       description: |
         This operation launches a new process based on the published revision of
         the specified template.
-
+  
         For the published revision of this template, get the Launch Form definition.
         If the template has a Launch Form, then the launch request must include a
         `launch_params` property that contains values for the template's Launch
         Parameters. The Launch Parameters are the fields of the template's Launch
         Form.
-
+  
         A process can only be launched from the published revision of the template.
         An unpublished template does not allow the client to launch processes.
-
+  
         The field data in the sample request body assumes that the Launch Form
         specifies a text field named `business-name`, a date-time field named
         `meeting-date` and a select field named `region`. When you use your
@@ -2740,8 +5257,162 @@ paths:
       x-code-samples:
         - lang: cURL
           source: |
-            curl -H "x-api-key: {api_key}" \
-              -X POST -i \
+            curl -X POST -i \
+              -H "x-api-key-id: {api_key}" \
+              -H "Content-Type: application/json" \
+              -d '{"launch_params":{"business-name":"Acme Inc.","meeting-date":"1580610161378"}}' \
+              "https://api.teamworkiq.com/api/v3/templates/{acc}/{tpl}/commands/launch"
+        - lang: Node
+          source: |
+            let https = require('https');
+            const api_key = "..."; // See "Securing your API Keys"
+
+            const requestHttp = (path, data) => {
+                const body = JSON.stringify(data);
+                const options = {
+                    hostname: 'api.teamworkiq.com',
+                    port: 443,
+                    path: path,
+                    method: 'POST',
+                    headers: {
+                        'Content': 'application/json',
+                        'x-api-key': api_key
+                    },
+                };
+
+                const req = https.request(options, (res) => {
+                    console.log(`Status code: ${res.statusCode}\n`);
+
+                    res.on('data', (d) => {
+                        console.log('Response:');
+                        process.stdout.write(d);
+                        console.log();
+                    });
+                });
+
+                req.on('erorr', (e) => {
+                    console.error(e);
+                });
+
+                req.write(body);
+                req.end();
+            };
+
+            requestHttp(`/api/v3/templates/${acc}/${tpl}/commands/launch`, {
+              launch_params: {
+                "business-name":"Acme Inc.",
+                "meeting-date":"1580610161378"
+              }
+            });
+
+      x-ignore-this: ignore this
+  /v3/templates/{acc}/{tpl}/revs/p/commands/launch:
+    post:
+      summary: "Launch a new process from a template revision"
+      tags:
+        - Process Template API
+      deprecated: true
+      description: |
+        This operation is deprecated. Use
+        `POST /v3/templates/{acc}/{tpl}/commands/launch` instead.
+        
+        This operation launches a new process based on the published revision
+        of the specified template.
+      parameters:
+        - name: "acc"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Account number
+          example: 12345
+        - name: "tpl"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+          description: Template number
+          example: 54321
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LaunchCommand"
+            example:
+              launch_params:
+                "business-name": "Acme Inc."
+                "meeting-date": "1600496307258"
+                "region":
+                  - west
+        required: true
+      responses:
+        201:
+          description: Success
+          headers:
+            Location:
+              schema:
+                type: "string"
+                format: "uri"
+              description: "Contains the URI for the newly launched process"
+          content: {}
+        400:
+          description: "Bad Request: Invalid request parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 400
+                code: 1400001
+        401:
+          description: "Unauthorized: Invalid or missing API key."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 401
+                message: "A message string"
+        403:
+          description: "Forbidden: No access permissions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 403
+                code: 1400013
+        404:
+          description: "Not Found: The requested resource could not be found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+              example:
+                status: 404
+                message: "A message string"
+        429:
+          description: "Too Many Requests: Request throttled or Quota exceeded."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                status: 429
+                code: 1429001
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithMsg"
+      security:
+        - api_key: []
+      x-code-samples:
+        - lang: cURL
+          source: |
+            curl -X POST -i \
+              -H "x-api-key-id: {api_key}" \
               -H "Content-Type: application/json" \
               -d '{"launch_params":{"business-name":"Acme Inc.","meeting-date":"1580610161378"}}' \
               "https://api.teamworkiq.com/api/v3/templates/{acc}/{tpl}/revs/p/commands/launch"
@@ -2781,7 +5452,7 @@ paths:
                 req.end();
             };
 
-            requestHttp(`/api/v3/templates/{acc}/{tpl}/revs/p/commands/launch`, {
+            requestHttp(`/api/v3/templates/${acc}/${tpl}/revs/p/commands/launch`, {
               launch_params: {
                 "business-name":"Acme Inc.",
                 "meeting-date":"1580610161378"
@@ -2842,6 +5513,10 @@ components:
       type: "object"
       description: An arbitrary JSON object
       additionalProperties: { }
+    EmptyObject:
+      type: "object"
+      description: An empty JSON object
+      example: {}
     DateSettings:
       oneOf:
         - $ref: "#/components/schemas/RelativeDateSettings"
@@ -4247,7 +6922,6 @@ components:
       type: object
       required:
         - task_no
-        - role_no_actual
         - task_type
         - text
         - status
@@ -4281,14 +6955,21 @@ components:
           example: 2001
         role_no_actual:
           type: integer
+          deprecated: true
           minimum: 1001
           maximum: 7000
           description: |
             Actual role number of the task.
+            
+            This server-computed property is deprecated. Most client programs already know
+            how to compute the effective role number for a task, and don't need the server
+            to do it for them.
 
             RootTask.role_number_actual = 1001 (Process Owner).
             If role_no != null, then role_number_actual = role_no.
             If role_no == null, then role_number_actual = parent.role_no_actual.
+            Do not rely on the existence of this property, because this property
+            will be removed in the near future.
 
             In other words, when a task's role number is non-null,
             the "actual role number" is the role number. Otherwise,
@@ -4396,19 +7077,24 @@ components:
             role).
 
             By default, a task's role_no is null.
-
-            See also role_no_actual.
           example: 2001
         role_no_actual:
           type: integer
           minimum: 1001
           maximum: 7000
+          deprecated: true
           description: |
             Actual role number
-
+  
+            This server-computed property is deprecated. Most client programs already know
+            how to compute the effective role number for a task, and don't need the server
+            to do it for them.
+  
             If role_no is non-null, then role_number_actual is role_no.
             If role_no is null, then role_number_actual is the same
             as the role_no_actual of the task's parent.
+            Do not rely on the existence of this property, because this property
+            will be removed in the near future.
           example: 2001
         text:
           type: string
@@ -4444,7 +7130,7 @@ components:
           type: integer
           format: int32
           description: |
-            Process number. This number
+            Process workflow number. This number
             is unique within the account.
           example: 123
         name:
@@ -4513,7 +7199,7 @@ components:
           type: integer
           format: int32
           description: |
-            Process number. This number is
+            Process workflow number. This number is
             unique within the account.
           example: 123
         template_no:
@@ -4678,7 +7364,6 @@ components:
           type: string
           description: "String containing the number of msec since midnight Jan 1, 1970 UTC"
           example: '1581001439775'
-          deprecated: true
         updated_at_time:
           type: string
           description: "Number of msec since midnight Jan 1, 1970 UTC"
@@ -4794,7 +7479,6 @@ components:
         updated_by:
           type: integer
           format: int64
-          deprecated: true
           description: TeamworkIQ User number
           example: 54321
       example:
@@ -5124,7 +7808,7 @@ components:
         process_no:
           type: integer
           format: int32
-          description: Process number. This is unique within the account.
+          description: Process workflow number. This is unique within the account.
           example: 1234
         task_no:
           type: integer
@@ -5146,7 +7830,7 @@ components:
             which activities result from the same REST request.
 
             If the REST request that performs an activity does not specify
-            an X-Request-ID header, then the server uses a timestamp string
+            an X-TeamworkIQ-Request-ID header, then the server uses a timestamp string
             by default.
           example: '1590607202229'
         parameters:
@@ -5203,6 +7887,69 @@ components:
             role_no: 2001
             name: Employee
 
+    FileCreateRequest:
+      type: object
+      description: |
+        A FileCreateRequest object is a
+        request to create a File object.
+      required:
+        - purpose
+        - task_no
+      properties:
+        purpose:
+          type: string
+          enum:
+            - DATA
+          description: |
+            This string identifies the purpose of the File.
+            `DATA` indicates that the purpose of the file is
+            to be an attachment to a File field in a task form.
+          example: DATA
+        task_no:
+          type: integer
+          format: int32
+          minimum: 5001
+          maximum: 8001
+          description: |
+            This property specifies the task number of the task
+            to whose form the file will be attached.
+          example: 5001
+    FileCreateResponse:
+      type: object
+      description: |
+        A FileCreateResponse object is the
+        response to a File Create request.
+      required:
+        - file_no
+        - upload_url
+      properties:
+        file_no:
+          type: string
+          format: alphanumeric
+          description: File ID
+          example: hk98765ToP87m6dcriq3hprR2O123456å
+        upload_url:
+          type: string
+          format: url
+          description: |
+            This is a short-lived upload URL that can be used to securely upload a file.
+            It is an S3 "Signed URI". It expires after 15 minutes.
+          example: "https://twiq-main-1-attachments.s3.amazonaws.com/xxxxx...xxxxx/12345/123?xxxxx...xxxxx"
+    FileCommitRequest:
+      type: object
+      description: |
+        A FileCommitRequest object is a request to commit a file upload.
+      required:
+        - version
+      properties:
+        version:
+          type: string
+          format: alphanumeric
+          description: |
+            This is an S3 version number.
+            It must be obtained from the `x-amz-version-id` response
+            header of the S3 PUT response.
+          example: 1234567890abcdefghij
     FileDownloadInfo:
       type: object
       description: |
@@ -5217,7 +7964,22 @@ components:
           description: |
             This is a short-lived download URI for the file.
             It is an S3 "Signed URI". It expires after 15 minutes.
-          example: "https://twiq-zstaging-1-attachments.s3.amazonaws.com/xxxxx...xxxxx/12345/123?xxxxx...xxxxx"
+          example: "https://twiq-main-1-attachments.s3.amazonaws.com/xxxxx...xxxxx/12345/123?xxxxx...xxxxx"
+    FileUploadInfo:
+      type: object
+      description: |
+        A FileUploadInfo object specifies a short-lived
+        upload URI for the file.
+      required:
+        - upload_url
+      properties:
+        download_url:
+          type: string
+          format: url
+          description: |
+            This is a short-lived upload URI to securely download the file.
+            It is an S3 "Signed URI". It expires after 15 minutes.
+          example: "https://twiq-main-1-attachments.s3.amazonaws.com/xxxxx...xxxxx/12345/123?xxxxx...xxxxx"
   securitySchemes:
     api_key:
       description: |

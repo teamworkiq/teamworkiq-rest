@@ -1,5 +1,14 @@
 ## CHANGELOG
 
+## 3.3.1
+
+ * Adds 
+
+   - Process Workflow API
+   - Process Task API
+   - Data API
+   - File API
+
 ## 3.2.0
 
  * Adds Account API
